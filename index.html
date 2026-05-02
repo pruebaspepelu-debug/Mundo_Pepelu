@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mundo Pepelu - MASTER RESTAURADO</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="./css/main.css">
+    <link rel="stylesheet" href="./css/layout.css">
+    <link rel="stylesheet" href="./css/modules/fisico.css">
+    <link rel="stylesheet" href="./css/modules/mindfulness.css">
+    <link rel="stylesheet" href="./css/modules/juegos.css">
+    <link rel="stylesheet" href="./css/modules/organizador.css">
+</head>
+<body>
+
+    <div class="screen active" id="screenLogin" style="justify-content: center;">
+        <div style="font-size: 4rem; margin-bottom: 10px;">🌍</div>
+        <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 5px; text-align: center;">Mundo Pepelu</h1>
+        <div style="color: #cbd5e1; font-size: 1rem; text-align: center;">Tu ecosistema de alto rendimiento.</div>
+        <div class="login-box">
+            <input type="email" id="loginEmail" class="login-input" placeholder="Tu Email" autocomplete="email">
+            <input type="password" id="loginPass" class="login-input" placeholder="Tu Contraseña" autocomplete="current-password">
+            <button class="btn btn-main" style="background: var(--primary); color: var(--bg-grad-1); height: 50px; font-size: 1.1rem; width: 100%; border-radius: 12px;" onclick="handleLogin()">ENTRAR</button>
+            <a href="#" style="color: #cbd5e1; font-size: 0.9rem; text-align: center; text-decoration: underline; cursor: pointer; margin-top: 10px;" onclick="handleRegister(event)">Crear cuenta nueva</a>
+            <a href="#" style="color: #94a3b8; font-size: 0.85rem; text-align: center; text-decoration: underline; cursor: pointer; margin-top: 5px;" onclick="handleResetPassword(event)">¿Has olvidado tu contraseña?</a>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenMain">
+        <div class="dashboard-gamer-layout">
+            <!-- IZQUIERDA: SALÓN DEL PERSONAJE (SKIN) -->
+            <div class="character-section">
+                <div id="avatarContainer" class="skin-container aura-base">
+                    <img id="userAvatar" src="avatar_goku_nivelSuperInstinto.png" alt="Skin" class="skin-avatar">
+                    <div class="aura-visual"></div>
+                </div>
+            </div>
+
+            <!-- DERECHA: HUD DE STATS Y MENÚ DE MISIONES -->
+            <div class="hud-section">
+                <div class="hud-card glass-card header-hud">
+                    <div class="hud-user-info">
+                        <h1 class="hud-greeting">Hola, <span id="displayUser">Pepelu</span></h1>
+                        <div class="hud-rank">ESTADO ACTUAL: <span id="energyLevelName">BASE</span></div>
+                    </div>
+                    <div class="hud-points-box">
+                        <div class="points-label">PODER</div>
+                        <div id="energyPointsDisplay" class="points-value">0 <small>PTS</small></div>
+                    </div>
+                </div>
+
+                <!-- HUD DE PROGRESO -->
+                <div class="hud-card glass-card progress-hud">
+                    <div class="hud-label">NIVEL DE ENERGÍA DIARIA</div>
+                    <div class="energy-bar-bg">
+                        <div id="energyBarFill" class="energy-bar-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- CHECKLIST DE MISIONES -->
+                <div class="hud-card glass-card missions-checklist">
+                    <div class="hud-label" style="margin-bottom: 10px;">ESTADO DE OBJETIVOS</div>
+                    <div id="missionsHUDList" class="missions-hud-list">
+                        <div class="mission-hud-item">Cargando objetivos...</div>
+                    </div>
+                </div>
+
+                <!-- MENÚ DE MISIONES (MÓDULOS) -->
+                <div class="missions-container">
+                    <div class="missions-title">MISIONES DE ENTRENAMIENTO</div>
+                    <div class="missions-grid">
+                        <div class="mission-card glass-card" onclick="openFisicoHub()">
+                            <span class="mission-icon">🏃</span>
+                            <div class="mission-text">FÍSICO</div>
+                        </div>
+                        <div class="mission-card glass-card" onclick="openBreatheHub()">
+                            <span class="mission-icon">🫁</span>
+                            <div class="mission-text">MINDFULNESS</div>
+                        </div>
+                        <div class="mission-card glass-card" onclick="openGamesHub()">
+                            <span class="mission-icon">🧠</span>
+                            <div class="mission-text">AGILIDAD</div>
+                        </div>
+                        <div class="mission-card glass-card" onclick="openOrganizador()">
+                            <span class="mission-icon">📓</span>
+                            <div class="mission-text">ORGANIZADOR</div>
+                        </div>
+                        <div class="mission-card glass-card" onclick="openHabitosModal()" style="grid-column: span 2;">
+                            <span class="mission-icon">🔥</span>
+                            <div class="mission-text">MAPA DE CONSTANCIA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hud-footer">
+                    <button class="btn-logout" onclick="logOut()">ABANDONAR SESIÓN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenFisicoMenu">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="goHome()">←</button>
+            <span class="mode-badge" style="color: var(--primary); border-color: var(--primary);">MODO FÍSICO</span>
+            <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicWorkoutGlobal" onclick="toggleMusic('workout')">🎵</button></div>
+        </div>
+        <div class="selector-container" style="margin-top:0;">
+            <div class="glass-card selector-card" onclick="openCustomRoutineMenu()" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(56, 189, 248, 0.1)); border-color: rgba(56, 189, 248, 0.3);">
+                <span class="selector-icon">⚙️</span>
+                <div class="text-left"><div class="main-effect-title" style="color: #38bdf8;">MI RUTINA</div><div class="selector-desc">Crea tu entrenamiento a medida.</div></div>
+            </div>
+            <div class="glass-card selector-card" onclick="openEstiramientosHub()">
+                <span class="selector-icon">🧘</span>
+                <div class="text-left"><div class="main-effect-title">ESTIRAMIENTOS</div><div class="selector-desc">Rutinas para Casa y Oficina.</div></div>
+            </div>
+            <div class="glass-card selector-card card-rehab" onclick="startWorkoutSession('rehab')">
+                <span class="selector-icon">⚕️</span>
+                <div class="text-left"><div class="main-effect-title" style="color: var(--rehab);">REHABILITACIÓN</div><div class="selector-desc">Rulo, activación y series.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenCustomRoutineMenu">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="openFisicoHub()">←</button>
+            <span class="mode-badge" style="color: var(--primary); border-color: var(--primary);">MI RUTINA</span>
+            <div class="audio-controls">
+                <button class="btn-circle" id="btnToggleVoiceWorkout" onclick="toggleWorkoutVoice()" title="Voz Entrenador">🗣️</button>
+                <button class="btn-circle" id="btnToggleMusicWorkoutCustom" onclick="toggleMusic('workout')">🎵</button>
+            </div>
+        </div>
+        <div class="custom-routine-builder glass-card">
+            <div style="font-weight: bold; color: #cbd5e1; margin-bottom: 10px; text-align: center;">CREADOR DE RUTINAS</div>
+            <div class="cr-inputs">
+                <input type="text" id="crExName" placeholder="Nombre del ejercicio" autocomplete="off" class="cr-input">
+                <select id="crExType" class="cr-input-small" style="width: 70px; font-size: 0.8rem; padding: 10px 5px;" onchange="document.getElementById('crCadenceRow').style.display = this.value === 'reps' ? 'flex' : 'none'">
+                    <option value="secs">⏱️</option>
+                    <option value="reps">🔢</option>
+                </select>
+                <input type="number" id="crExVal" placeholder="Cant" autocomplete="off" class="cr-input-small">
+            </div>
+            <div id="crCadenceRow" style="display:none; margin-bottom: 10px; align-items: center; gap: 10px; padding: 0 5px;">
+                <span style="font-size: 0.8rem; color: #94a3b8;">RITMO:</span>
+                <input type="number" id="crExCadence" value="4" class="cr-input-small" style="width: 60px; padding: 8px;">
+                <span style="font-size: 0.8rem; color: #94a3b8;">segs / repetición</span>
+            </div>
+            <div class="cr-inputs" style="margin-bottom: 15px;">
+                <div class="cr-field">
+                    <label>SERIES</label>
+                    <input type="number" id="crExSets" value="1" class="cr-input-small" style="width: 100%;">
+                </div>
+                <div class="cr-field">
+                    <label>D. SERIE (s)</label>
+                    <input type="number" id="crExRestSet" value="15" class="cr-input-small" style="width: 100%;">
+                </div>
+                <div class="cr-field">
+                    <label>D. EJERC (s)</label>
+                    <input type="number" id="crExRestEx" value="30" class="cr-input-small" style="width: 100%;">
+                </div>
+            </div>
+            <textarea id="crExInstr" placeholder="Instrucciones para la voz (ej: Empieza con pies juntos y baja despacio...)" class="cr-textarea" rows="2"></textarea>
+            <button class="btn btn-sec" onclick="addCustomExercise()" style="width: 100%; margin-bottom: 20px;">➕ AÑADIR EJERCICIO A LA LISTA</button>
+            <div id="crExerciseList" class="cr-list">
+                <!-- Javascript will populate -->
+            </div>
+            <button class="btn btn-main" style="width: 100%; height: 50px; font-size: 1.1rem; margin-top: 15px;" onclick="startWorkoutSession('custom')">▶ INICIAR MI RUTINA</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenEstiramientosMenu">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="openFisicoHub()">←</button>
+            <span class="mode-badge" style="color: var(--primary); border-color: var(--primary);">ESTIRAMIENTOS</span>
+            <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicWorkoutEst" onclick="toggleMusic('workout')">🎵</button></div>
+        </div>
+        <div class="selector-container" style="margin-top:0;">
+            <div class="glass-card selector-card" onclick="startWorkoutSession('office')">
+                <span class="selector-icon">🏢</span>
+                <div class="text-left"><div class="main-effect-title">OFICINA</div><div class="selector-desc">Adaptados de pie o sentado.</div></div>
+            </div>
+            <div class="glass-card selector-card" onclick="startWorkoutSession('home')">
+                <span class="selector-icon">🏠</span>
+                <div class="text-left"><div class="main-effect-title">CASA</div><div class="selector-desc">Rutina completa y profunda.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenBreatheMenu">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="goHome()">←</button>
+            <span class="mode-badge" style="background: rgba(139, 92, 246, 0.2); color: var(--breathe); border-color: var(--breathe);">MINDFULNESS</span>
+            <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicZenGlobal" onclick="toggleMusic('zen')">🎵</button></div>
+        </div>
+        <div class="selector-container" id="breatheListContainer" style="margin-top:0;"></div>
+    </div>
+
+    <div class="screen hidden" id="screenGamesMenu">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="goHome()">←</button>
+            <span class="mode-badge" style="background: rgba(251, 146, 60, 0.2); color: var(--brain); border-color: var(--brain);">AGILIDAD MENTAL</span>
+            <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicGamesGlobal" onclick="toggleMusic('games')">🎵</button></div>
+        </div>
+        <div class="selector-container" style="margin-top:0;">
+            <div class="glass-card selector-card card-games" onclick="openRanking()" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(250, 204, 21, 0.1));">
+                <span class="selector-icon" style="font-size:2rem;">🏆</span>
+                <div class="text-left"><div class="main-effect-title" style="color:#facc15;">Ranking Global</div><div class="selector-desc">Compite con el mundo.</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startMath()">
+                <span class="selector-icon" style="font-size:2rem;">🧮</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Cálculo Rápido</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startReflex()">
+                <span class="selector-icon" style="font-size:2rem;">🎯</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Caza-Dianas</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startSimon()">
+                <span class="selector-icon" style="font-size:2rem;">🧩</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Memoria Simón</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startStroop()">
+                <span class="selector-icon" style="font-size:2rem;">🎨</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Efecto Stroop</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startNBack()">
+                <span class="selector-icon" style="font-size:2rem;">🧠</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">N-Back (Memoria)</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startSyllogism()">
+                <span class="selector-icon" style="font-size:2rem;">⚖️</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Silogismos Lógicos</div></div>
+            </div>
+            <div class="glass-card selector-card card-games" onclick="startSpatial()">
+                <span class="selector-icon" style="font-size:2rem;">🧊</span>
+                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Rotación Espacial</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenWorkout">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="exitWorkout()">←</button>
+            <span class="mode-badge" id="workoutModeBadge">MODO</span>
+            <button class="btn-circle" id="btnToggleMusicWorkoutIn" onclick="toggleMusic('workout')">🎵</button>
+        </div>
+        <div class="viz-wrapper"><div class="viz-glow" id="vizGlow"></div><div class="visualizer" id="vizBox"></div><div class="badge-series" id="seriesBadge">Serie 1/3</div></div>
+        <div class="info-box"><div class="ex-name" id="exName">...</div><div class="ex-instr" id="exInstr">...</div></div>
+        <div class="timer-big" id="workoutTimerDisplay">40</div>
+        <div class="controls-bar">
+            <button class="btn btn-sec" style="height:60px; font-size:1.2rem; border-radius:16px;" onclick="prevEx()">⏮</button>
+            <button class="btn btn-main" id="btnWorkoutPlay" style="height:60px; font-size:1.2rem; border-radius:16px; margin:0;" onclick="toggleWorkoutPlay()">▶</button>
+            <button class="btn btn-sec" style="height:60px; font-size:1.2rem; border-radius:16px;" onclick="nextEx()">⏭</button>
+        </div>
+        <div class="rest-overlay" id="restLayer"><div class="rest-type" id="restTypeLabel">CAMBIO DE EJERCICIO</div><div style="font-size: 6rem; font-weight: 900; line-height: 1;" id="restTimer">4</div><div class="next-label" id="nextPrefix">PREPÁRATE PARA:</div><div class="next-title" id="nextExTitle">...</div></div>
+    </div>
+
+    <div class="screen hidden" id="screenBreatheActive">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="goBackToBreatheMenu()">←</button>
+            <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicZen" onclick="toggleMusic('zen')">🎵</button><button class="btn-circle" id="btnToggleVoiceZen" onclick="toggleZenVoice()">🗣️</button></div>
+        </div>
+        <div class="info-box" style="margin-top: -10px;"><div class="ex-name" id="breatheTitle">...</div><div class="ex-instr" id="breatheDesc">...</div></div>
+        <div class="breathe-container"><div class="breathe-ring"></div><div class="breathe-circle" id="breatheCircle"><span class="breathe-text" id="breatheText">LISTO</span></div></div>
+        <div class="timer-big" id="breatheTimerDisplay">...</div>
+        <button class="btn btn-main" id="btnBreathePlay" style="background: var(--breathe);" onclick="toggleBreathe()">COMENZAR</button>
+    </div>
+
+    <div class="screen hidden" id="gameMath"><div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">MATE</span><div style="width:44px;"></div></div><div class="game-area"><div class="progress-container"><div class="progress-bar" id="mathBar"></div></div><div class="stats-bar"><span id="mathTime">30s</span><span id="mathScore">0 pts</span></div><div class="math-eq" id="mathEq">5 + 5</div><form onsubmit="submitMath(event)" style="width: 100%; display: flex; justify-content: center;"><input type="number" id="mathIn" class="math-input" autocomplete="off"></form></div></div>
+    <div class="screen hidden" id="gameReflex"><div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">DIANAS</span><div style="width:44px;"></div></div><div class="game-area"><div class="stats-bar"><span>Objetivo: <span id="refCount">1</span>/15</span></div><div class="reflex-box" id="refBox"><div class="reflex-target" id="refTarget" onclick="clickTarget()"></div></div></div></div>
+    <div class="screen hidden" id="gameSimon"><div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">SIMÓN</span><div style="width:44px;"></div></div><div class="game-area"><div class="stats-bar" style="justify-content: center; font-size: 1.5rem;" id="simonMsg">Nivel 1</div><div class="simon-grid"><button class="simon-btn s-red" id="btn-red" onclick="simonClick('red')"></button><button class="simon-btn s-blue" id="btn-blue" onclick="simonClick('blue')"></button><button class="simon-btn s-green" id="btn-green" onclick="simonClick('green')"></button><button class="simon-btn s-yellow" id="btn-yellow" onclick="simonClick('yellow')"></button></div></div></div>
+    <div class="screen hidden" id="gameStroop"><div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">STROOP</span><div style="width:44px;"></div></div><div class="game-area"><div class="stats-bar"><span>Ronda: <span id="strCount">1</span>/20</span><span id="strScore">Aciertos: 0</span></div><div class="stroop-word" id="strWord">ROJO</div><div class="stroop-grid"><button class="stroop-btn" onclick="strClick('red')">ROJO</button><button class="stroop-btn" onclick="strClick('blue')">AZUL</button><button class="stroop-btn" onclick="strClick('green')">VERDE</button><button class="stroop-btn" onclick="strClick('yellow')">AMARILLO</button></div><div class="stroop-timer"><div class="stroop-bar" id="strBar"></div></div></div></div>
+    
+    <div class="screen hidden" id="screenResult"><div class="header-bar"><div style="width: 44px;"></div><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">RESULTADOS</span><div style="width: 44px;"></div></div><div class="game-area" style="justify-content: center;"><div style="font-size: 2.5rem; font-weight: 900; margin-bottom: 5px; color: var(--brain);">¡Partida Terminada!</div><div class="res-grid" id="resGrid"></div><div id="recordContainer" class="record-box"></div><button class="btn btn-main" style="background: var(--brain); height:60px; font-size:1.2rem; border-radius:16px;" onclick="goBackToGamesMenu()">VOLVER AL MENÚ</button></div></div>
+    
+    <div class="screen hidden" id="gameNBack">
+        <div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">N-BACK</span><div style="width:44px;"></div></div>
+        <div class="game-area">
+            <div class="stats-bar"><span id="nbackScore">Aciertos: 0</span></div>
+            <div class="nback-grid">
+                <div class="nback-cell" id="nbc-0"></div><div class="nback-cell" id="nbc-1"></div><div class="nback-cell" id="nbc-2"></div>
+                <div class="nback-cell" id="nbc-3"></div><div class="nback-cell" id="nbc-4"></div><div class="nback-cell" id="nbc-5"></div>
+                <div class="nback-cell" id="nbc-6"></div><div class="nback-cell" id="nbc-7"></div><div class="nback-cell" id="nbc-8"></div>
+            </div>
+            <button class="btn btn-main" style="background: var(--brain); width: 100%; height: 60px; font-size: 1.2rem; border-radius: 16px;" onclick="clickNBack()">¡COINCIDE!</button>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="gameSyllogism">
+        <div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">LÓGICA</span><div style="width:44px;"></div></div>
+        <div class="game-area">
+            <div class="stats-bar"><span id="sylScore">1/10</span></div>
+            <div class="syl-box">
+                <div class="syl-premise" id="sylP1">Premisa 1</div>
+                <div class="syl-premise" id="sylP2">Premisa 2</div>
+                <div class="syl-conclusion" id="sylC">Conclusión</div>
+            </div>
+            <div class="syl-btn-container">
+                <button class="btn btn-main" style="background: var(--c-green); flex: 1; height: 60px; font-size: 1.2rem; border-radius: 16px; margin: 0;" onclick="submitSyllogism(true)">VERDADERO</button>
+                <button class="btn btn-main" style="background: var(--c-red); flex: 1; height: 60px; font-size: 1.2rem; border-radius: 16px; margin: 0;" onclick="submitSyllogism(false)">FALSO</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="gameSpatial">
+        <div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="color:var(--brain); border-color:var(--brain);">ROTACIÓN</span><div style="width:44px;"></div></div>
+        <div class="game-area">
+            <div class="stats-bar"><span id="spatScore">1/10</span></div>
+            <div class="spat-container">
+                <div class="spat-grid-main" id="spatMain"></div>
+                <div style="font-weight: 800; color: #cbd5e1; font-size: 1rem;">Selecciona la versión rotada:</div>
+                <div class="spat-options">
+                    <button class="spat-opt-btn" onclick="submitSpatial(0)"><div class="spat-grid-opt" id="spatOpt0"></div></button>
+                    <button class="spat-opt-btn" onclick="submitSpatial(1)"><div class="spat-grid-opt" id="spatOpt1"></div></button>
+                    <button class="spat-opt-btn" onclick="submitSpatial(2)"><div class="spat-grid-opt" id="spatOpt2"></div></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="screen hidden" id="screenRanking"><div class="header-bar"><button class="btn-circle" onclick="goBackToGamesMenu()">←</button><span class="mode-badge" style="background: rgba(250, 204, 21, 0.2); color: #facc15; border-color: #facc15;">SALÓN DE LA FAMA</span><div style="width: 44px;"></div></div><div class="game-area" style="justify-content: flex-start; width: 100%; margin-top: 10px;"><div style="display:flex; gap:10px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center;" id="rankingTabs"><button class="rank-tab" onclick="loadRanking('math', this)">🧮 Mates</button><button class="rank-tab" onclick="loadRanking('reflex', this)">🎯 Reflejos</button><button class="rank-tab" onclick="loadRanking('simon', this)">🧠 Simón</button><button class="rank-tab" onclick="loadRanking('stroop', this)">🎨 Stroop</button><button class="rank-tab" onclick="loadRanking('nback', this)">🧠 N-Back</button><button class="rank-tab" onclick="loadRanking('syllogism', this)">⚖️ Silogismos</button><button class="rank-tab" onclick="loadRanking('spatial', this)">🧊 Rotación</button></div><div id="rankingList" style="width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 40px;"></div></div></div>
+
+    <div class="screen hidden" id="screenOrganizador">
+        <div class="header-bar">
+            <button class="btn-circle" onclick="goHome()">←</button>
+            <span class="mode-badge" style="color: #10b981; border-color: #10b981;">SEGUNDO CEREBRO</span>
+            <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicOrg" onclick="toggleMusic('org')">🎵</button></div>
+        </div>
+        <div class="org-tabs">
+            <button class="org-tab active-tab" onclick="switchOrgTab('ideas')" id="tabIdeas">💡 Ideas</button>
+            <button class="org-tab" onclick="switchOrgTab('planificador')" id="tabPlanificador">🗓️ Planificador</button>
+            <button class="org-tab" onclick="switchOrgTab('calendar')" id="tabCalendar">📅 Agenda</button>
+        </div>
+        
+        <div id="orgIdeasView" class="org-view view-active">
+            <div class="idea-input-box glass-card">
+                <input type="text" id="ideaInput" placeholder="Escribe tu nueva idea..." autocomplete="off">
+                <div class="idea-priority-btns">
+                    <button class="btn-priority prio-green" onclick="addIdea('green')"></button>
+                    <button class="btn-priority prio-yellow" onclick="addIdea('yellow')"></button>
+                    <button class="btn-priority prio-red" onclick="addIdea('red')"></button>
+                </div>
+            </div>
+            <div class="ideas-grid">
+                <div class="ideas-col">
+                    <div class="col-header" style="color: var(--c-red);">URGENTE</div>
+                    <div id="container-red" class="ideas-list"></div>
+                </div>
+                <div class="ideas-col">
+                    <div class="col-header" style="color: var(--c-yellow);">A TENER EN CUENTA</div>
+                    <div id="container-yellow" class="ideas-list"></div>
+                </div>
+                <div class="ideas-col">
+                    <div class="col-header" style="color: var(--c-green);">BACKLOG</div>
+                    <div id="container-green" class="ideas-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="orgAgendaView" class="org-view view-hidden">
+            <div class="focus-triangle glass-card">
+                <div style="text-align: center; font-weight: 800; color: #cbd5e1; margin-bottom: 10px;">TRIÁNGULO DE FOCO</div>
+                <div class="focus-input-wrapper">
+                    <input type="text" class="focus-input focus-1" id="focus1" placeholder="1. Principal Objetivo" autocomplete="off">
+                    <button class="idea-bulb-btn" onclick="openIdeaSelector('focus1')" title="Añadir idea del Embudo">💡</button>
+                </div>
+                <div class="focus-input-wrapper">
+                    <input type="text" class="focus-input focus-2" id="focus2" placeholder="2. Objetivo Secundario" autocomplete="off">
+                    <button class="idea-bulb-btn" onclick="openIdeaSelector('focus2')" title="Añadir idea del Embudo">💡</button>
+                </div>
+                <div class="focus-input-wrapper">
+                    <input type="text" class="focus-input focus-3" id="focus3" placeholder="3. Tarea Menor" autocomplete="off">
+                    <button class="idea-bulb-btn" onclick="openIdeaSelector('focus3')" title="Añadir idea del Embudo">💡</button>
+                </div>
+            </div>
+            
+            <div class="agenda-container glass-card">
+                <div id="planDateLabel" style="text-align: center; font-weight: 800; color: #10b981; margin-bottom: 15px; font-size: 1.1rem;">Plan de Hoy</div>
+                <div class="agenda-list" id="agendaList">
+                    <!-- Javascript will generate hours from 06:00 to 00:00 -->
+                </div>
+            </div>
+            
+            <div class="agenda-actions">
+                <button class="btn btn-sec" style="flex: 1;" onclick="limpiarDia()">LIMPIAR DÍA</button>
+                <button class="btn btn-main btn-fijar-plan" id="btnGuardarPlan" style="flex: 2; margin: 0;" onclick="guardarPlan(false, this)">FIJAR PLAN DEL DÍA</button>
+            </div>
+        </div>
+
+        <div id="orgCalendarView" class="org-view view-hidden">
+            <div class="calendar-container glass-card" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
+                    <button class="btn-circle" style="width: 40px; height: 40px;" onclick="prevMonth()">&lt;</button>
+                    <h3 id="calendarMonthLabel" style="margin: 0; color: #f8fafc;">Cargando...</h3>
+                    <button class="btn-circle" style="width: 40px; height: 40px;" onclick="nextMonth()">&gt;</button>
+                </div>
+                <div id="calendar-container" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; flex: 1;">
+                    <!-- Se genera dinámicamente en agenda.js -->
+                </div>
+            </div>
+        </div>
+
+        <div id="ideaSelectorModal" class="idea-selector-modal hidden">
+            <div class="idea-selector-content glass-card">
+                <div class="idea-selector-header">
+                    <h3>Selecciona una Idea</h3>
+                    <button class="close-modal" onclick="closeIdeaSelector()">✕</button>
+                </div>
+                <div id="ideaSelectorList" class="idea-selector-list"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Todo el código JavaScript ha sido migrado a módulos ES6 en la carpeta /js/
+</script>
+<script type="module" src="./js/main.js"></script>
+    <div class="modal-overlay hidden" id="modalHabitos">
+        <div class="glass-card modal-content" style="max-width: 450px; width: 90%; padding: 25px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0; font-size: 1.4rem; font-weight: 900;">MAPA DE CONSTANCIA</h2>
+                <button class="btn-circle" onclick="closeHabitosModal()" style="width: 32px; height: 32px; font-size: 0.9rem;">✕</button>
+            </div>
+            
+            <div id="heatmapContainer" class="heatmap-container">
+                <!-- Heatmap se genera aquí -->
+            </div>
+            
+            <div id="habitDetails" class="habit-details" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                <div style="text-align: center; color: #94a3b8; font-size: 0.9rem;">Haz clic en un día para ver los detalles.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Metafísica - Platón</title>
+    <style>
+        :root { 
+            --bg: #0f172a; --panel: #1e293b; --primary: #38bdf8; 
+            --luz: #e2e8f0; --sombra: #020617; --fuego: #7f1d1d; --ascenso: #1e3a8a;
+            --text: #f8fafc; --glass-border: rgba(255, 255, 255, 0.08);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body { background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden;}
+        
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; animation: fadeIn 0.4s ease; }
+        .screen.active { display: flex; }
+        
+        /* MENU PRINCIPAL METAFÍSICA */
+        .meta-header { text-align: center; margin-bottom: 40px; margin-top: 20px;}
+        .meta-title { font-size: 2.5rem; font-weight: 900; margin: 0; letter-spacing: 2px; text-transform: uppercase; color: #cbd5e1;}
+        .meta-desc { color: #94a3b8; font-size: 1rem; margin-top: 5px; }
+
+        .btn-menu { background: var(--panel); border: 1px solid var(--glass-border); border-left: 4px solid var(--primary); padding: 25px; border-radius: 16px; width: 100%; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.2s; margin-bottom: 15px;}
+        .btn-menu:hover { background: rgba(255,255,255,0.05); transform: translateY(-2px); }
+        .btn-menu-icon { font-size: 2.5rem; }
+        .btn-menu-text h3 { margin: 0 0 5px 0; font-size: 1.3rem; color: #fff;}
+        .btn-menu-text p { margin: 0; font-size: 0.9rem; color: #94a3b8;}
+
+        /* WIZARD CAVERNA */
+        .caverna-container { width: 100%; padding: 30px; border-radius: 24px; transition: background 1s ease, box-shadow 1s ease; border: 1px solid var(--glass-border); min-height: 450px; display: flex; flex-direction: column; }
+        
+        .caverna-container.step-1 { background: var(--sombra); box-shadow: 0 0 40px rgba(0,0,0,0.8); }
+        .caverna-container.step-2 { background: var(--fuego); box-shadow: 0 0 40px rgba(239, 68, 68, 0.1); }
+        .caverna-container.step-3 { background: var(--ascenso); box-shadow: 0 0 40px rgba(56, 189, 248, 0.1); }
+        .caverna-container.step-4 { background: var(--luz); color: #0f172a; border-color: #cbd5e1; }
+
+        .caverna-header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;}
+        .btn-close { background: rgba(255,255,255,0.1); border: none; color: inherit; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .step-4 .btn-close { background: rgba(0,0,0,0.1); }
+        
+        .caverna-progress { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--primary); width: 25%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .step-4 .progress-bar-fill { background: #22c55e; }
+
+        .caverna-step { display: none; flex-direction: column; flex-grow: 1; }
+        .caverna-step.active { display: flex; animation: fadeIn 0.6s ease; }
+        
+        .caverna-desc { font-size: 1.1rem; font-weight: 600; line-height: 1.4; margin-bottom: 20px; opacity: 0.9;}
+        .caverna-input { width: 100%; flex-grow: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; color: inherit; font-size: 1.1rem; resize: none; margin-bottom: 20px; outline: none; transition: 0.3s; font-family: inherit; line-height: 1.5; box-sizing: border-box;}
+        .step-4 .caverna-input { background: #fff; border-color: #94a3b8; color: #0f172a; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);}
+
+        .btn-caverna { padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.2s; background: #fff; color: var(--bg); }
+        .btn-back { background: transparent; border: 1px solid var(--glass-border); margin-bottom: 10px; color: inherit; }
+        .step-4 .btn-back { border-color: #cbd5e1; }
+        .btn-final { background: #22c55e; color: #fff; font-size: 1.2rem; }
+
+        /* HISTORIAS (ARCHIVO) */
+        .history-list { width: 100%; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;}
+        .history-card { background: var(--panel); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px;}
+        .history-date { font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
+        .h-sombra { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; border-left: 3px solid #64748b; font-style: italic; color: #cbd5e1;}
+        .h-luz { background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 12px; border-left: 3px solid #22c55e; color: #0f172a; font-weight: 700;}
+        .h-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; opacity: 0.7; font-weight: 900;}
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="screenMenu" class="screen active">
+        <div class="meta-header">
+            <h1 class="meta-title">Metafísica</h1>
+            <div class="meta-desc">El taller del pensamiento estructurado.</div>
+        </div>
+
+        <div class="btn-menu" onclick="openWizard()">
+            <div class="btn-menu-icon">🕯️</div>
+            <div class="btn-menu-text">
+                <h3>Entrar a la Caverna</h3>
+                <p>Desglosa un miedo, problema o decisión.</p>
+            </div>
+        </div>
+
+        <div class="btn-menu" style="border-left-color: #22c55e;" onclick="openHistory()">
+            <div class="btn-menu-icon">📜</div>
+            <div class="btn-menu-text">
+                <h3>Archivo de Reflexiones</h3>
+                <p>Revisa tus conclusiones objetivas previas.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="screenCaverna" class="screen">
+        <div id="cavernaWrapper" class="caverna-container step-1">
+            <div class="caverna-header">
+                <h2 id="cavernaTitulo" style="margin:0; font-size: 1.2rem;">Paso 1: Las Sombras</h2>
+                <button class="btn-close" onclick="closeWizard()">✕</button>
+            </div>
+            
+            <div class="caverna-progress"><div id="cavernaBar" class="progress-bar-fill"></div></div>
+
+            <div id="step1" class="caverna-step active">
+                <p class="caverna-desc">1. La Percepción Inicial.<br>Describe tu problema visceral, sin filtros. ¿Qué ves en la pared de la cueva?</p>
+                <textarea id="inSombras" class="caverna-input" placeholder="Ej: Mi hijo suspende y va a arruinar su futuro..."></textarea>
+                <button class="btn-caverna" onclick="nextStep(2)">Identificar el Fuego →</button>
+            </div>
+
+            <div id="step2" class="caverna-step">
+                <p class="caverna-desc">2. El Fuego.<br>¿Quién proyecta esta sombra? Identifica las fuentes (Miedos heredados, ego, presión social, opiniones externas).</p>
+                <textarea id="inFuego" class="caverna-input" placeholder="Ej: La presión por el estatus social, la prisa..."></textarea>
+                <button class="btn-caverna btn-back" onclick="nextStep(1)">← Volver</button>
+                <button class="btn-caverna" onclick="nextStep(3)">Iniciar el Ascenso →</button>
+            </div>
+
+            <div id="step3" class="caverna-step">
+                <p class="caverna-desc">3. El Ascenso.<br>Fricción Lógica. ¿Y si tus fuentes están equivocadas? ¿Cuál es el peor escenario real y objetivo?</p>
+                <textarea id="inAscenso" class="caverna-input" placeholder="Ej: Repetir curso no es el fin en una carrera de 40 años. Las notas a los 15 no definen al adulto..."></textarea>
+                <button class="btn-caverna btn-back" onclick="nextStep(2)">← Volver</button>
+                <button class="btn-caverna" onclick="nextStep(4)">Ver la Luz →</button>
+            </div>
+
+            <div id="step4" class="caverna-step">
+                <p class="caverna-desc">4. La Luz.<br>La Verdad Objetiva. Escribe tu conclusión final y la acción concreta libre de ruido.</p>
+                <textarea id="inLuz" class="caverna-input" placeholder="Ej: Lo esencial es consolidar su hábito de estudio sin destruir su motivación. Hablaré con él sin gritos."></textarea>
+                <button class="btn-caverna btn-back" onclick="nextStep(3)">← Volver a la cueva</button>
+                <button class="btn-caverna btn-final" onclick="saveReflection()">Manifestar Verdad ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screenHistorias" class="screen">
+        <div style="width: 100%; max-width: 600px; display: flex; align-items: center; margin-bottom: 30px; gap: 15px;">
+            <button class="btn-close" style="background: var(--panel); border: 1px solid var(--glass-border); color:#fff; width: 45px; height: 45px;" onclick="closeHistory()">←</button>
+            <h2 style="margin:0;">Archivo Akáshico</h2>
+        </div>
+
+        <div class="history-list" id="historyContainer">
+            </div>
+    </div>
+
+<script>
+    // SIMULACIÓN DE BASE DE DATOS (Hasta que la conectemos al Firebase global)
+    let fakeDB = [
+        {
+            fecha: "10 de Marzo, 2026",
+            sombra: "Mi hijo de 15 años tiene que sacar notas perfectas ya mismo o no logrará ser secretario de ayuntamiento.",
+            luz: "Lo esencial ahora no es la nota perfecta, sino consolidar su hábito de estudio. Me sentaré a planificar con él sin meterle presión tóxica."
+        }
+    ];
+
+    // --- NAVEGACIÓN ---
+    function openWizard() {
+        document.getElementById('screenMenu').classList.remove('active');
+        document.getElementById('screenCaverna').classList.add('active');
+        nextStep(1); // Reset al abrir
+    }
+
+    function closeWizard() {
+        document.getElementById('screenCaverna').classList.remove('active');
+        document.getElementById('screenMenu').classList.add('active');
+        // Limpiar inputs
+        document.getElementById('inSombras').value = ""; document.getElementById('inFuego').value = "";
+        document.getElementById('inAscenso').value = ""; document.getElementById('inLuz').value = "";
+    }
+
+    function openHistory() {
+        document.getElementById('screenMenu').classList.remove('active');
+        document.getElementById('screenHistorias').classList.add('active');
+        renderHistory();
+    }
+
+    function closeHistory() {
+        document.getElementById('screenHistorias').classList.remove('active');
+        document.getElementById('screenMenu').classList.add('active');
+    }
+
+    // --- LÓGICA DEL WIZARD (CAVERNA) ---
+    function nextStep(step) {
+        // Validación obligatoria para no saltarse pasos (solo al avanzar)
+        if (step === 2 && document.getElementById('inSombras').value.trim() === "") return alert("Debes describir la Sombra primero.");
+        if (step === 3 && document.getElementById('inFuego').value.trim() === "") return alert("Identifica el Fuego antes de ascender.");
+        if (step === 4 && document.getElementById('inAscenso').value.trim() === "") return alert("Debes razonar en el Ascenso para ver la Luz.");
+
+        // Ocultar todos y mostrar el activo
+        document.querySelectorAll('.caverna-step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step' + step).classList.add('active');
+        
+        // Cambiar el tema visual del contenedor
+        const wrapper = document.getElementById('cavernaWrapper');
+        wrapper.className = 'caverna-container step-' + step;
+
+        // Actualizar UI Header
+        const titulos = ["", "Paso 1: Las Sombras", "Paso 2: El Fuego", "Paso 3: El Ascenso", "Paso 4: La Luz"];
+        document.getElementById('cavernaTitulo').innerText = titulos[step];
+        document.getElementById('cavernaBar').style.width = (step * 25) + "%";
+    }
+
+    function saveReflection() {
+        if (document.getElementById('inLuz').value.trim() === "") return alert("Debes extraer una Verdad Objetiva.");
+        
+        const newRef = {
+            fecha: "Hoy",
+            sombra: document.getElementById('inSombras').value,
+            luz: document.getElementById('inLuz').value
+        };
+
+        fakeDB.unshift(newRef); // Añadir al principio
+        alert("Tu verdad ha sido guardada.");
+        closeWizard();
+    }
+
+    // --- RENDER HISTORIAL ---
+    function renderHistory() {
+        const container = document.getElementById('historyContainer');
+        container.innerHTML = "";
+
+        if(fakeDB.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#94a3b8;'>Aún no hay reflexiones en el archivo.</p>";
+            return;
+        }
+
+        fakeDB.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "history-card";
+            card.innerHTML = `
+                <div class="history-date">${item.fecha}</div>
+                <div class="h-sombra">
+                    <div class="h-label">La Sombra (Percepción)</div>
+                    "${item.sombra}"
+                </div>
+                <div class="h-luz">
+                    <div class="h-label" style="color: #15803d;">La Luz (Realidad)</div>
+                    ${item.luz}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,441 @@
+/* css/modules/organizador.css */
+
+.org-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    margin-top: 15px; /* Evita solapamiento con la cabecera */
+    width: 100%;
+    max-width: 600px;
+}
+
+.org-tab {
+    flex: 1;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: #cbd5e1;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.org-tab.active-tab {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #10b981;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.org-view {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+.org-view.view-hidden {
+    display: none;
+}
+
+.org-view.view-active {
+    display: flex;
+}
+
+/* Embudo de Ideas */
+.idea-input-box {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+
+#ideaInput {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--glass-border);
+    color: white;
+    font-size: 1.1rem;
+    padding: 15px;
+    border-radius: 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#ideaInput:focus {
+    border-color: #10b981;
+}
+
+.idea-priority-btns {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.btn-priority {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-priority:hover {
+    transform: scale(1.1);
+}
+
+.prio-green {
+    background: var(--c-green);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.prio-yellow {
+    background: var(--c-yellow);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+}
+
+.prio-red {
+    background: var(--c-red);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.ideas-grid {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-height: 300px;
+}
+
+@media (max-width: 768px) {
+    .ideas-grid {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+}
+
+.ideas-col {
+    flex: 1;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.col-header {
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 5px;
+}
+
+.ideas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.idea-card {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 0.95rem;
+    color: #f8fafc;
+    border-left: 4px solid transparent;
+    word-break: break-word;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.idea-card span {
+    flex: 1;
+}
+
+.idea-card .delete-idea {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.idea-card .delete-idea:hover {
+    color: var(--c-red);
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--c-red);
+}
+
+.idea-card.idea-red { border-left-color: var(--c-red); }
+.idea-card.idea-yellow { border-left-color: var(--c-yellow); }
+.idea-card.idea-green { border-left-color: var(--c-green); }
+
+/* Planificador Diario */
+.focus-triangle {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.focus-input {
+    flex: 1;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+.focus-input:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.focus-input:focus, .agenda-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02), 0 0 15px rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.idea-bulb-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 10px;
+    opacity: 0.6;
+    transition: transform 0.2s, opacity 0.2s, filter 0.2s;
+    filter: drop-shadow(0 0 2px rgba(250, 204, 21, 0.2));
+}
+
+.idea-bulb-btn:hover {
+    opacity: 1;
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.8));
+}
+
+.focus-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.focus-1 { border-left: 5px solid var(--c-red); }
+.focus-2 { border-left: 5px solid var(--c-yellow); }
+.focus-3 { border-left: 5px solid var(--c-green); }
+
+.w-100 { width: 100%; }
+.w-90 { width: 90%; }
+.w-80 { width: 80%; }
+
+.agenda-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.agenda-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.agenda-row {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s;
+    position: relative;
+}
+
+.agenda-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.agenda-row.current-hour {
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.agenda-row.current-hour::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: var(--c-green);
+    box-shadow: 0 0 10px var(--c-green);
+}
+
+.agenda-time {
+    width: 60px;
+    padding: 15px 10px;
+    font-weight: 800;
+    color: #64748b;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.agenda-row.current-hour .agenda-time {
+    color: var(--c-green);
+}
+
+.agenda-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    padding: 15px;
+    font-size: 0.95rem;
+    font-family: 'Inter', 'Roboto', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.agenda-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.btn-fijar-plan {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    font-weight: 900;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.btn-fijar-plan:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    transform: translateY(-2px);
+}
+
+.btn-fijar-success {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Modal de Selección de Ideas */
+.idea-selector-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* No bloquear clics fuera si está oculto, aunque aquí el overlay tapa todo */
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.idea-selector-modal.hidden {
+    display: none;
+}
+
+.idea-selector-content {
+    pointer-events: auto; /* Capturar clics en la tarjeta */
+    width: 90%;
+    max-width: 420px;
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(16,185,129,0.1);
+}
+
+.idea-selector-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.idea-selector-header h3 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1.2rem;
+}
+
+.idea-selector-header .close-modal {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.idea-selector-list {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.idea-selector-list .idea-card {
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.idea-selector-list .idea-card:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.idea-selector-list .idea-card .delete-idea {
+    display: none; /* No borrar desde selector */
+}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rehabilitación Aislado - AUDIO PRO</title>
+    <style>
+        :root { 
+            --bg: #0f172a; 
+            --panel: #1e293b; 
+            --primary: #10b981; /* Verde Rehab */
+            --accent: #f472b6; 
+            --text: #f8fafc; 
+            --font-main: system-ui, -apple-system, sans-serif;
+            --glass-bg: rgba(30, 41, 59, 0.6); 
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+        
+        body { 
+            font-family: var(--font-main);
+            background-color: var(--bg); color: var(--text);
+            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            padding: 0; overflow: hidden;
+        }
+
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            padding: 20px; box-sizing: border-box;
+        }
+        
+        .hidden { transform: translateX(100%); pointer-events: none; opacity: 0; }
+        .active { transform: translateX(0); opacity: 1; pointer-events: all; }
+        .exit-left { transform: translateX(-100%); opacity: 0; }
+
+        .selector-container { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; max-width: 400px; }
+        .selector-card {
+            background: var(--panel); border: 2px solid rgba(255,255,255,0.05);
+            padding: 30px; border-radius: 20px; text-align: center; cursor: pointer;
+            transition: all 0.2s; border-left: 4px solid var(--primary);
+        }
+        .selector-card:active { transform: scale(0.95); border-color: var(--primary); }
+        .selector-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+        .selector-title { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+        .selector-desc { font-size: 0.9rem; color: #94a3b8; margin-top: 5px; }
+
+        /* CABECERA Y AUDIO */
+        .workout-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 50px; }
+        .btn-circle { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #cbd5e1; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;}
+        .btn-circle:active { transform: scale(0.9); }
+        .mode-badge { background: rgba(16, 185, 129, 0.1); color: var(--primary); padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+        .audio-controls { display: flex; gap: 10px; }
+        .toggle-off { opacity: 0.3; text-decoration: line-through; border-color: rgba(255,255,255,0.05); }
+
+        .badge-series { background: var(--primary); color: var(--bg); padding: 5px 12px; border-radius: 20px; font-weight: 900; font-size: 0.8rem; margin-bottom: 10px; display: none; }
+
+        .visualizer {
+            width: 100%; max-width: 260px; aspect-ratio: 1/1; 
+            background: var(--panel); border-radius: 20px; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.05); overflow: hidden;
+            position: relative;
+        }
+        .visualizer svg { width: 60%; height: 60%; fill: var(--text); }
+
+        .info-box { text-align: center; margin-bottom: 20px; max-width: 400px; }
+        .ex-name { font-size: 1.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 8px; color: var(--primary); }
+        .ex-instr { font-size: 1rem; color: #cbd5e1; line-height: 1.4; }
+
+        .timer-big { font-size: 5.5rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -2px; margin-bottom: 20px; }
+        
+        .controls-bar { width: 100%; max-width: 400px; display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; }
+        .btn { border: none; padding: 20px; border-radius: 16px; font-weight: 700; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .btn-main { background: var(--text); color: var(--bg); font-size: 1.2rem; }
+        .btn-sec { background: rgba(255,255,255,0.1); color: white; }
+        .btn:active { transform: scale(0.95); }
+
+        .rest-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98); z-index: 50;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .rest-overlay.active { display: flex; animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .rest-type { color: var(--accent); font-weight: 900; letter-spacing: 2px; font-size: 1rem; margin-bottom: 10px; }
+        .next-label { color: #94a3b8; font-size: 1rem; margin-top: 20px; }
+        .next-title { color: var(--primary); font-size: 2rem; font-weight: 800; text-align: center; padding: 0 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="screen active" id="screenSelect">
+        <h1 style="margin-bottom: 40px;">Módulo Aislado</h1>
+        <div class="selector-container">
+            <div class="selector-card" onclick="startSession()">
+                <span class="selector-icon">⚕️</span>
+                <div class="selector-title">REHABILITACIÓN</div>
+                <div class="selector-desc">Rulo, Estiramientos y Activos.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenWorkout">
+        <div class="workout-header">
+            <button class="btn-circle" onclick="goHome()">←</button>
+            <span class="mode-badge" id="modeBadge">REHABILITACIÓN</span>
+            <div class="audio-controls">
+                <button class="btn-circle" id="btnToggleMusic" onclick="toggleMusic()">🎵</button>
+            </div>
+        </div>
+
+        <div class="visualizer" id="vizBox"></div>
+        <div class="badge-series" id="seriesBadge">Serie 1/3</div>
+        <div class="timer-big" id="timerDisplay">40</div>
+
+        <div class="info-box">
+            <div class="ex-name" id="exName">Cargando...</div>
+            <div class="ex-instr" id="exInstr">...</div>
+        </div>
+
+        <div class="controls-bar">
+            <button class="btn btn-sec" onclick="prevEx()">⏮</button>
+            <button class="btn btn-main" id="btnPlay" onclick="togglePlay()">▶</button>
+            <button class="btn btn-sec" onclick="nextEx()">⏭</button>
+        </div>
+
+        <div class="rest-overlay" id="restLayer">
+            <div class="rest-type" id="restTypeLabel">CAMBIO DE EJERCICIO</div>
+            <div style="font-size: 5rem; font-weight: 900;" id="restTimer">4</div>
+            <div class="next-label">PREPÁRATE PARA:</div>
+            <div class="next-title" id="nextExTitle">...</div>
+        </div>
+    </div>
+
+<script>
+    // --- 1. MOTOR DE AUDIO Y VOCES (PRO) ---
+    let bgMusic = null;
+    let isMusicOn = false;
+    let currentVoice = null;
+    let synth = window.speechSynthesis;
+    let bestVoice = null; 
+
+    if(synth) { 
+        synth.onvoiceschanged = () => { 
+            let voices = synth.getVoices(); 
+            bestVoice = voices.find(v => v.lang.includes('es') && (v.name.includes('Google')||v.name.includes('Premium'))) || voices[0]; 
+        }; 
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBeep(t) { 
+        if(audioCtx.state==='suspended') audioCtx.resume(); 
+        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); 
+        osc.connect(g); g.connect(audioCtx.destination); 
+        if(t==='short'){osc.type='sine';osc.frequency.setValueAtTime(600,audioCtx.currentTime);g.gain.setValueAtTime(0.5,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.15);osc.start(audioCtx.currentTime);osc.stop(audioCtx.currentTime+0.15);}
+        else{osc.type='square';osc.frequency.setValueAtTime(800,audioCtx.currentTime);g.gain.setValueAtTime(0.3,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.5);osc.start(audioCtx.currentTime);osc.stop(audioCtx.currentTime+0.5);} 
+    }
+
+    function toggleMusic() {
+        const btn = document.getElementById('btnToggleMusic');
+        if(isMusicOn) { 
+            bgMusic.pause(); isMusicOn=false; btn.classList.add('toggle-off'); 
+        } else { 
+            if(!bgMusic) { bgMusic = new Audio('voces/musica_fondo.mp3'); bgMusic.loop=true; bgMusic.volume=0.12; } 
+            bgMusic.play().catch(e=>{console.log("Música bloqueada");}); 
+            isMusicOn=true; btn.classList.remove('toggle-off'); 
+        }
+    }
+
+    function stopAllVoice() {
+        if(currentVoice) { currentVoice.pause(); currentVoice.currentTime = 0; currentVoice = null; }
+        if(synth) synth.cancel(); 
+    }
+
+    const motivaciones = ["motiva_1", "motiva_2", "motiva_3", "motiva_4", "motiva_5"];
+    
+    function playWorkoutAudio(filename, fbTitle, fbInstr) { 
+        stopAllVoice(); // SILENCIADOR: Corta la voz anterior
+        let a = new Audio(`voces/${filename}.mp3`); 
+        currentVoice = a;
+        a.play().catch(e => { 
+            if(!filename.includes('motiva') && synth){ 
+                let u = new SpeechSynthesisUtterance(fbInstr ? `${fbTitle}. ${fbInstr}` : fbTitle); 
+                u.lang='es-ES'; if(bestVoice) u.voice=bestVoice; 
+                synth.speak(u); 
+            } 
+        }); 
+    }
+
+    // --- 2. ASSETS VISUALES ---
+    const ASSETS = {
+        lunge: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M19,15H15V13H19V15M13,7A2,2 0 0,1 11,5A2,2 0 0,1 13,3A2,2 0 0,1 15,5A2,2 0 0,1 13,7M21.54,21.14L20.14,22.54L18.45,15.65L14,13V16H10V10H10.15L12.54,12.42C12.8,12.67 13.15,12.81 13.5,12.81H18V14L21.54,21.14M6.35,16.62L3.88,14.15L7.24,6.75C7.5,6.2 8,5.81 8.6,5.81C9.57,5.81 10.27,6.8 9.91,7.7L7.75,12.5L10,14.74V22H8V15.79L6.35,16.62Z"/></svg>' },
+        floor: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M6,2C4.89,2 4,2.9 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V4C20,2.89 19.1,2 18,2H6M6,4H18V20H6V4M9.5,13.5A2.5,2.5 0 0,1 12,11A2.5,2.5 0 0,1 14.5,13.5A2.5,2.5 0 0,1 12,16A2.5,2.5 0 0,1 9.5,13.5Z"/></svg>' },
+        torso: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M12,2A5,5 0 0,1 17,7A5,5 0 0,1 12,12A5,5 0 0,1 7,7A5,5 0 0,1 12,2M12,4A3,3 0 0,0 9,7A3,3 0 0,0 12,10A3,3 0 0,0 15,7A3,3 0 0,0 12,4M19,22H5V20H19V22M17,18H7V16H17V18M15,14H9V12H15V14Z"/></svg>' },
+        roller: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M19,10H5V14H19V10M19,8A2,2 0 0,1 21,10V14A2,2 0 0,1 19,16H5A2,2 0 0,1 3,14V10A2,2 0 0,1 5,8H19Z"/></svg>' }
+    };
+
+    // --- 3. BASE DE DATOS EXACTA CON IDs PARA EL AUDIO ---
+    const routine = [
+        // FASE 1: RULO (4 ejercicios)
+        {id: "gluteo_y_piramidal", n:"Rulo: Glúteo Derecho", t: 120, i:"Cruza tobillo derecho sobre rodilla izquierda. Rueda suave.", a: ASSETS.roller},
+        {id: "gluteo_y_piramidal", n:"Rulo: Glúteo Izquierdo", t: 120, i:"Cruza tobillo izquierdo sobre rodilla derecha. Rueda suave.", a: ASSETS.roller},
+        {id: "espalda_alta_dorsal", n:"Rulo: Espalda Alta", t: 180, i:"Manos en nuca, levanta glúteo y rueda a mitad de espalda.", a: ASSETS.roller},
+        {id: "cuadriceps_flexores", n:"Rulo: Cuádriceps", t: 90, i:"Boca abajo, rueda de cadera a rodilla con ambas piernas.", a: ASSETS.roller},
+        
+        // FASE 2: ESTIRAMIENTOS (6 ejercicios)
+        {id: "psoas_derecho", n:"Psoas Derecho", t: 45, i:"Una rodilla al suelo. Empuja cadera apretando glúteo.", a: ASSETS.lunge},
+        {id: "psoas_izquierdo", n:"Psoas Izquierdo", t: 45, i:"Una rodilla al suelo. Empuja cadera apretando glúteo.", a: ASSETS.lunge},
+        {id: "piramidal_derecho", n:"Piramidal Derecho", t: 45, i:"Boca arriba, tira del muslo derecho al pecho.", a: ASSETS.floor},
+        {id: "piramidal_izquierdo", n:"Piramidal Izquierdo", t: 45, i:"Boca arriba, tira del muslo izquierdo al pecho.", a: ASSETS.floor},
+        {id: "pectoral_derecho", n:"Pectoral Derecho", t: 45, i:"En marco, apoya antebrazo y gira tronco.", a: ASSETS.torso},
+        {id: "pectoral_izquierdo", n:"Pectoral Izquierdo", t: 45, i:"En marco, apoya antebrazo y gira tronco.", a: ASSETS.torso},
+        
+        // FASE 3: EJERCICIOS ACTIVOS (3 ejercicios)
+        {id: "puente_de_gluteo", n:"Puente de Glúteo", t: 50, sets: 3, restSet: 15, i:"12 Repeticiones. Sube cadera apretando fuerte arriba.", a: ASSETS.floor},
+        {id: "retraccion_escapular", n:"Retracción Escapular", t: 50, sets: 3, restSet: 15, i:"12 Repeticiones. Junta omóplatos, brazos en 'W'.", a: ASSETS.floor},
+        {id: "cuadrupedia", n:"Cuadrupedia", t: 50, sets: 3, restSet: 15, i:"10 Repeticiones. Alterna brazo y pierna contraria sin arquear.", a: ASSETS.floor}
+    ];
+
+    let idx = 0;
+    let timer = 40;
+    let isRunning = false;
+    let interval = null;
+    let currentSet = 1;
+
+    function startSession() {
+        if(audioCtx.state==='suspended') audioCtx.resume();
+        if(!isMusicOn) toggleMusic(); // Enciende la música al entrar
+        
+        idx = 0;
+        document.getElementById('screenSelect').classList.remove('active');
+        document.getElementById('screenSelect').classList.add('exit-left');
+        document.getElementById('screenWorkout').classList.remove('hidden');
+        document.getElementById('screenWorkout').classList.add('active');
+        loadEx(0, true);
+    }
+
+    function goHome() {
+        stopTimer();
+        stopAllVoice();
+        if(bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; isMusicOn = false; }
+        location.reload(); 
+    }
+
+    function loadEx(i, isNewEx = true) {
+        if(i >= routine.length) { finish(); return; }
+        if(i < 0) i = 0;
+        idx = i;
+        let ex = routine[idx];
+
+        if(isNewEx) currentSet = 1;
+
+        document.getElementById('exName').innerText = ex.n;
+        document.getElementById('exInstr').innerText = ex.i;
+
+        const viz = document.getElementById('vizBox');
+        viz.innerHTML = ex.a.content;
+        viz.querySelector('svg').style.fill = "#f8fafc";
+
+        const badge = document.getElementById('seriesBadge');
+        if (ex.sets && ex.sets > 1) {
+            badge.style.display = "block";
+            badge.innerText = `Serie ${currentSet}/${ex.sets}`;
+        } else {
+            badge.style.display = "none";
+        }
+
+        timer = ex.t || 40;
+        updateTimerDisplay();
+        isRunning = false;
+        document.getElementById('btnPlay').innerText = "▶";
+        
+        if(isNewEx) playWorkoutAudio(ex.id, ex.n, ex.i); // Usa el ID para buscar el MP3
+    }
+
+    function togglePlay() {
+        if(isRunning) {
+            stopTimer();
+            document.getElementById('btnPlay').innerText = "▶";
+        } else {
+            if(audioCtx.state==='suspended') audioCtx.resume();
+            if(bgMusic && !isMusicOn) toggleMusic();
+            isRunning = true;
+            document.getElementById('btnPlay').innerText = "⏸";
+            interval = setInterval(tick, 1000);
+        }
+    }
+
+    function tick() {
+        timer--;
+        updateTimerDisplay();
+        let ex = routine[idx];
+
+        // Lógica de Motivación y Beeps
+        if(timer === 20 && (ex.t || 40) > 25) { 
+            let az = Math.floor(Math.random() * motivaciones.length); 
+            playWorkoutAudio(motivaciones[az], "", ""); 
+        }
+        if(timer === 5) playWorkoutAudio("cinco_segundos", "Cinco segundos", "");
+        if(timer > 0 && timer <= 3) playBeep('short');
+
+        if(timer <= 0) {
+            stopTimer();
+            playBeep('long');
+            if(ex.sets && currentSet < ex.sets) {
+                currentSet++;
+                startRest(true, ex.restSet || 15);
+            } else {
+                startRest(false, 4);
+            }
+        }
+    }
+
+    function startRest(isSetRest, duration) {
+        if(!isSetRest && idx >= routine.length - 1) { finish(); return; } 
+        
+        document.getElementById('restLayer').classList.add('active');
+        
+        if(isSetRest) {
+            document.getElementById('restTypeLabel').innerText = "DESCANSO";
+            document.getElementById('nextExTitle').innerText = routine[idx].n + ` (Serie ${currentSet})`;
+            playWorkoutAudio("descanso", "Descanso", ""); 
+        } else {
+            document.getElementById('restTypeLabel').innerText = "CAMBIO DE EJERCICIO";
+            document.getElementById('nextExTitle').innerText = routine[idx+1].n;
+            playWorkoutAudio("cambio", "Cambio", ""); 
+        }
+        
+        let restTime = duration;
+        document.getElementById('restTimer').innerText = restTime;
+
+        let restInt = setInterval(() => {
+            restTime--;
+            document.getElementById('restTimer').innerText = restTime;
+            
+            if(restTime > 0 && restTime <= 3) playBeep('short');
+            
+            if(restTime <= 0) {
+                clearInterval(restInt);
+                document.getElementById('restLayer').classList.remove('active');
+                playBeep('long');
+                
+                if(isSetRest) {
+                    playWorkoutAudio("siguiente_serie_vamos", "Siguiente serie, vamos", "");
+                    loadEx(idx, false); 
+                } else {
+                    playWorkoutAudio("comenzamos", "Comenzamos", "");
+                    loadEx(idx + 1, true); 
+                }
+                togglePlay(); 
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(interval);
+        isRunning = false;
+    }
+
+    function updateTimerDisplay() {
+        document.getElementById('timerDisplay').innerText = timer;
+    }
+
+    function nextEx() { stopTimer(); stopAllVoice(); loadEx(idx + 1, true); }
+    function prevEx() { stopTimer(); stopAllVoice(); loadEx(idx - 1, true); }
+
+    function finish() {
+        stopTimer();
+        stopAllVoice();
+        document.getElementById('exName').innerText = "¡TERMINADO!";
+        document.getElementById('exInstr').innerText = "Buen trabajo, Pepelu.";
+        document.getElementById('timerDisplay').innerText = "✅";
+        document.getElementById('btnPlay').style.display = 'none';
+        playWorkoutAudio("terminado", "Entrenamiento completado", "");
+    }
+</script>
+</body>
+</html>

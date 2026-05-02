@@ -1,0 +1,9 @@
+:root { 
+    --bg-grad-1: #0f172a; --bg-grad-2: #1e1b4b; --primary: #38bdf8; 
+    --accent: #f472b6; --rehab: #10b981; --breathe: #8b5cf6; --brain: #fb923c; 
+    --text: #f8fafc; 
+    --glass-bg: rgba(30, 41, 59, 0.6); --glass-border: rgba(255, 255, 255, 0.08);
+    --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+    --c-red: #ef4444; --c-blue: #3b82f6; --c-green: #22c55e; --c-yellow: #eab308;
+}
+body { font-family: var(--font-main); background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2)); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; }

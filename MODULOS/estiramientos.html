@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Entrenador Pepelu V9.1</title>
+    <style>
+        :root { 
+            --bg: #0f172a; 
+            --panel: #1e293b; 
+            --primary: #38bdf8; 
+            --accent: #f472b6; 
+            --text: #f8fafc; 
+            --success: #22c55e;
+            --font-main: system-ui, -apple-system, sans-serif;
+        }
+        
+        body { 
+            font-family: var(--font-main);
+            background-color: var(--bg); color: var(--text);
+            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            padding: 0; overflow: hidden;
+        }
+
+        /* --- PANTALLAS (SISTEMA DE NAVEGACIÓN) --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            padding: 20px; box-sizing: border-box;
+        }
+        
+        .hidden { transform: translateX(100%); pointer-events: none; opacity: 0; }
+        .active { transform: translateX(0); opacity: 1; pointer-events: all; }
+        .exit-left { transform: translateX(-100%); opacity: 0; }
+
+        /* --- PANTALLA 1: SELECTOR --- */
+        .selector-container { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; max-width: 400px; }
+        .selector-card {
+            background: var(--panel); border: 2px solid rgba(255,255,255,0.05);
+            padding: 30px; border-radius: 20px; text-align: center; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .selector-card:active { transform: scale(0.95); border-color: var(--primary); }
+        .selector-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+        .selector-title { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+        .selector-desc { font-size: 0.9rem; color: #94a3b8; margin-top: 5px; }
+
+        /* --- PANTALLA 2: ENTRENAMIENTO --- */
+        .workout-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 50px; }
+        .btn-back { background: none; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; }
+        .mode-badge { background: rgba(56, 189, 248, 0.1); color: var(--primary); padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+
+        /* COMPONENTE DE IMAGEN/SVG */
+        .visualizer {
+            width: 100%; max-width: 300px; aspect-ratio: 1/1; 
+            background: var(--panel); border-radius: 20px; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.05); overflow: hidden;
+            position: relative;
+        }
+        /* Aquí irán tus fotos en el futuro */
+        .visualizer img { width: 100%; height: 100%; object-fit: cover; }
+        .visualizer svg { width: 60%; height: 60%; fill: var(--text); }
+
+        .info-box { text-align: center; margin-bottom: 20px; max-width: 400px; }
+        .ex-name { font-size: 1.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 8px; color: var(--primary); }
+        .ex-instr { font-size: 1rem; color: #cbd5e1; line-height: 1.4; }
+
+        .timer-big { font-size: 5.5rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -2px; margin-bottom: 20px; }
+        
+        /* CONTROLES */
+        .controls-bar { width: 100%; max-width: 400px; display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; }
+        .btn { border: none; padding: 20px; border-radius: 16px; font-weight: 700; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .btn-main { background: var(--text); color: var(--bg); font-size: 1.2rem; }
+        .btn-sec { background: rgba(255,255,255,0.1); color: white; }
+        .btn:active { transform: scale(0.95); }
+
+        /* PANTALLA DE CAMBIO (REST) */
+        .rest-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98); z-index: 50;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .rest-overlay.active { display: flex; animation: fadeIn 0.2s; }
+        .next-label { color: #94a3b8; font-size: 1rem; margin-top: 20px; }
+        .next-title { color: var(--primary); font-size: 2rem; font-weight: 800; text-align: center; padding: 0 20px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="screen active" id="screenSelect">
+        <h1 style="margin-bottom: 40px;">Hola, Pepelu</h1>
+        <div class="selector-container">
+            <div class="selector-card" onclick="startSession('office')">
+                <span class="selector-icon">🏢</span>
+                <div class="selector-title">OFICINA</div>
+                <div class="selector-desc">Ejercicios adaptados de pie o sentado. Sin suelo.</div>
+            </div>
+            <div class="selector-card" onclick="startSession('home')">
+                <span class="selector-icon">🏠</span>
+                <div class="selector-title">CASA</div>
+                <div class="selector-desc">Rutina completa incluyendo suelo y tumbado.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="screenWorkout">
+        <div class="workout-header">
+            <button class="btn-back" onclick="goHome()">✕</button>
+            <span class="mode-badge" id="modeBadge">MODO</span>
+            <div style="width: 24px;"></div> </div>
+
+        <div class="visualizer" id="vizBox">
+            </div>
+
+        <div class="timer-big" id="timerDisplay">40</div>
+
+        <div class="info-box">
+            <div class="ex-name" id="exName">Cargando...</div>
+            <div class="ex-instr" id="exInstr">...</div>
+        </div>
+
+        <div class="controls-bar">
+            <button class="btn btn-sec" onclick="prevEx()">⏮</button>
+            <button class="btn btn-main" id="btnPlay" onclick="togglePlay()">▶</button>
+            <button class="btn btn-sec" onclick="nextEx()">⏭</button>
+        </div>
+
+        <div class="rest-overlay" id="restLayer">
+            <div style="font-size: 5rem; font-weight: 900;" id="restTimer">4</div>
+            <div class="next-label">SIGUIENTE:</div>
+            <div class="next-title" id="nextExTitle">...</div>
+        </div>
+    </div>
+
+<script>
+    // --- 1. BASE DE DATOS DE IMÁGENES (SVG por ahora, JPG en el futuro) ---
+    // Cuando tengas fotos, cambiarás type: 'svg' por type: 'img' y content: 'img/mifoto.jpg'
+    const ASSETS = {
+        leg: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,11.5C13,11.5 15,11.5 15,12.5C15,13.5 13,14.5 13,14.5V17H11V14.5C11,14.5 9,13.5 9,12.5C9,11.5 11,11.5 11,11.5V9H13V11.5Z"/></svg>' },
+        lunge: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M19,15H15V13H19V15M13,7A2,2 0 0,1 11,5A2,2 0 0,1 13,3A2,2 0 0,1 15,5A2,2 0 0,1 13,7M21.54,21.14L20.14,22.54L18.45,15.65L14,13V16H10V10H10.15L12.54,12.42C12.8,12.67 13.15,12.81 13.5,12.81H18V14L21.54,21.14M6.35,16.62L3.88,14.15L7.24,6.75C7.5,6.2 8,5.81 8.6,5.81C9.57,5.81 10.27,6.8 9.91,7.7L7.75,12.5L10,14.74V22H8V15.79L6.35,16.62Z"/></svg>' },
+        chair: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M20 8H4V6h16v2zm-2-4H6V2h12v2zm2 14v6h-3v-4H7v4H4v-6h16zM4 10h16v6H4v-6z"/></svg>' }, 
+        floor: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M6,2C4.89,2 4,2.9 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V4C20,2.89 19.1,2 18,2H6M6,4H18V20H6V4M9.5,13.5A2.5,2.5 0 0,1 12,11A2.5,2.5 0 0,1 14.5,13.5A2.5,2.5 0 0,1 12,16A2.5,2.5 0 0,1 9.5,13.5Z"/></svg>' },
+        torso: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M12,2A5,5 0 0,1 17,7A5,5 0 0,1 12,12A5,5 0 0,1 7,7A5,5 0 0,1 12,2M12,4A3,3 0 0,0 9,7A3,3 0 0,0 12,10A3,3 0 0,0 15,7A3,3 0 0,0 12,4M19,22H5V20H19V22M17,18H7V16H17V18M15,14H9V12H15V14Z"/></svg>' },
+        neck: { type: 'svg', content: '<svg viewBox="0 0 24 24"><path d="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21 1.35.33 2.74.33 4.26 0 4.41-3.59 8-8 8z"/></svg>' }
+    };
+
+    // --- 2. RUTINA MASTER (Nombres completos para voz clara) ---
+    const DB = {
+        // --- RUTINA DE CASA (FULL) ---
+        home: [
+            {n:"Gemelo Derecho", i:"Pie derecho atrás, talón suelo.", a: ASSETS.leg},
+            {n:"Gemelo Izquierdo", i:"Pie izquierdo atrás, talón suelo.", a: ASSETS.leg},
+            {n:"Cuádriceps Derecho", i:"Talón al glúteo derecho.", a: ASSETS.leg},
+            {n:"Cuádriceps Izquierdo", i:"Talón al glúteo izquierdo.", a: ASSETS.leg},
+            {n:"Femoral Derecho", i:"Talón clavado, punta arriba.", a: ASSETS.leg},
+            {n:"Femoral Izquierdo", i:"Talón clavado, punta arriba.", a: ASSETS.leg},
+            {n:"Aductor Derecho", i:"Piernas abiertas, carga peso a derecha.", a: ASSETS.leg}, 
+            {n:"Aductor Izquierdo", i:"Piernas abiertas, carga peso a izquierda.", a: ASSETS.leg}, 
+            {n:"Psoas Derecho", i:"Zancada profunda, rodilla al suelo.", a: ASSETS.lunge},
+            {n:"Psoas Izquierdo", i:"Zancada profunda, rodilla al suelo.", a: ASSETS.lunge},
+            {n:"Piramidal Derecho", i:"Tumbado. Tobillo derecho sobre rodilla izquierda.", a: ASSETS.floor},
+            {n:"Piramidal Izquierdo", i:"Tumbado. Tobillo izquierdo sobre rodilla derecha.", a: ASSETS.floor},
+            {n:"Pies Juntos", i:"Espalda recta, toca puntas.", a: ASSETS.torso},
+            {n:"Pies Separados", i:"Espalda recta, toca suelo centro.", a: ASSETS.torso},
+            {n:"Dorsal Derecho", i:"Brazo derecho cruza por arriba.", a: ASSETS.torso},
+            {n:"Dorsal Izquierdo", i:"Brazo izquierdo cruza por arriba.", a: ASSETS.torso},
+            {n:"Pectoral Derecho", i:"Brazo en marco puerta.", a: ASSETS.torso},
+            {n:"Pectoral Izquierdo", i:"Brazo en marco puerta.", a: ASSETS.torso},
+            {n:"Cobra", i:"Tumbado boca abajo, levanta pecho.", a: ASSETS.floor},
+            {n:"Cuello Derecho", i:"Oreja al hombro derecho.", a: ASSETS.neck},
+            {n:"Cuello Izquierdo", i:"Oreja al hombro izquierdo.", a: ASSETS.neck}
+        ],
+        
+        // --- RUTINA DE OFICINA (ADAPTADA) ---
+        office: [
+            {n:"Gemelo Derecho", i:"Pie derecho atrás, empuja pared.", a: ASSETS.leg},
+            {n:"Gemelo Izquierdo", i:"Pie izquierdo atrás, empuja pared.", a: ASSETS.leg},
+            {n:"Cuádriceps Derecho", i:"De pie. Agárrate a la mesa si necesitas.", a: ASSETS.leg},
+            {n:"Cuádriceps Izquierdo", i:"De pie. Agárrate a la mesa si necesitas.", a: ASSETS.leg},
+            {n:"Femoral Derecho", i:"Talón clavado, punta arriba.", a: ASSETS.leg},
+            {n:"Femoral Izquierdo", i:"Talón clavado, punta arriba.", a: ASSETS.leg},
+            {n:"Aductor Derecho", i:"De pie. Abre piernas, flexiona derecha.", a: ASSETS.leg},
+            {n:"Aductor Izquierdo", i:"De pie. Abre piernas, flexiona izquierda.", a: ASSETS.leg}, 
+            {n:"Psoas Derecho", i:"Zancada DE PIE. No toques suelo con rodilla.", a: ASSETS.lunge}, 
+            {n:"Psoas Izquierdo", i:"Zancada DE PIE. No toques suelo con rodilla.", a: ASSETS.lunge},  
+            {n:"Piramidal Derecho", i:"SENTADO en silla. Tobillo sobre rodilla.", a: ASSETS.chair}, 
+            {n:"Piramidal Izquierdo", i:"SENTADO en silla. Tobillo sobre rodilla.", a: ASSETS.chair},  
+            {n:"Pies Juntos", i:"De pie. Baja tronco recto.", a: ASSETS.torso},
+            {n:"Pies Separados", i:"De pie. Baja tronco al centro.", a: ASSETS.torso},
+            {n:"Dorsal Derecho", i:"Brazo derecho cruza por arriba.", a: ASSETS.torso},
+            {n:"Dorsal Izquierdo", i:"Brazo izquierdo cruza por arriba.", a: ASSETS.torso},
+            {n:"Pectoral Derecho", i:"Brazo en marco puerta.", a: ASSETS.torso},
+            {n:"Pectoral Izquierdo", i:"Brazo en marco puerta.", a: ASSETS.torso},
+            {n:"Extensión Espalda", i:"DE PIE. Manos a riñones, arquea suave atrás.", a: ASSETS.torso},
+            {n:"Cuello Derecho", i:"Oreja al hombro derecho.", a: ASSETS.neck},
+            {n:"Cuello Izquierdo", i:"Oreja al hombro izquierdo.", a: ASSETS.neck}
+        ]
+    };
+
+    // --- VARIABLES DE ESTADO ---
+    let routine = [];
+    let idx = 0;
+    let timer = 40;
+    let isRunning = false;
+    let isResting = false;
+    let interval = null;
+    const synth = window.speechSynthesis;
+
+    // --- FUNCIONES LÓGICAS ---
+    function startSession(mode) {
+        routine = DB[mode];
+        idx = 0;
+        document.getElementById('modeBadge').innerText = mode === 'office' ? "OFICINA (Sin Suelo)" : "CASA (Completo)";
+        
+        // Transición de pantallas
+        document.getElementById('screenSelect').classList.remove('active');
+        document.getElementById('screenSelect').classList.add('exit-left');
+        document.getElementById('screenWorkout').classList.remove('hidden');
+        document.getElementById('screenWorkout').classList.add('active');
+        
+        loadEx(0);
+    }
+
+    function goHome() {
+        stopTimer();
+        location.reload(); 
+    }
+
+    function loadEx(i) {
+        if(i >= routine.length) { finish(); return; }
+        if(i < 0) i = 0;
+        idx = i;
+        let ex = routine[idx];
+
+        // 1. Textos
+        document.getElementById('exName').innerText = ex.n;
+        document.getElementById('exInstr').innerText = ex.i;
+
+        // 2. Imagen/SVG
+        const viz = document.getElementById('vizBox');
+        if(ex.a.type === 'svg') {
+            viz.innerHTML = ex.a.content;
+            viz.querySelector('svg').style.fill = "#f8fafc";
+        } else {
+            viz.innerHTML = `<img src="${ex.a.content}" alt="Ejercicio">`;
+        }
+
+        // 3. Reset Tiempo
+        timer = 40;
+        updateTimerDisplay();
+        isRunning = false;
+        document.getElementById('btnPlay').innerText = "▶";
+        
+        speak(ex.n);
+    }
+
+    function togglePlay() {
+        if(isRunning) {
+            stopTimer();
+            document.getElementById('btnPlay').innerText = "▶";
+        } else {
+            isRunning = true;
+            document.getElementById('btnPlay').innerText = "⏸";
+            interval = setInterval(tick, 1000);
+        }
+    }
+
+    function tick() {
+        timer--;
+        updateTimerDisplay();
+
+        if(timer === 5) speak("Cinco segundos");
+        
+        if(timer <= 0) {
+            stopTimer();
+            startRest();
+        }
+    }
+
+    function startRest() {
+        if(idx >= routine.length - 1) { finish(); return; } 
+        
+        isResting = true;
+        document.getElementById('restLayer').classList.add('active');
+        document.getElementById('nextExTitle').innerText = routine[idx+1].n;
+        
+        let restTime = 4;
+        document.getElementById('restTimer').innerText = restTime;
+        speak("Cambio");
+
+        let restInt = setInterval(() => {
+            restTime--;
+            document.getElementById('restTimer').innerText = restTime;
+            if(restTime <= 0) {
+                clearInterval(restInt);
+                document.getElementById('restLayer').classList.remove('active');
+                isResting = false;
+                loadEx(idx + 1);
+                togglePlay(); 
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(interval);
+        isRunning = false;
+    }
+
+    function updateTimerDisplay() {
+        document.getElementById('timerDisplay').innerText = timer;
+    }
+
+    function nextEx() { stopTimer(); loadEx(idx + 1); }
+    function prevEx() { stopTimer(); loadEx(idx - 1); }
+
+    function finish() {
+        stopTimer();
+        document.getElementById('exName').innerText = "¡TERMINADO!";
+        document.getElementById('exInstr').innerText = "Buen trabajo, Pepelu.";
+        document.getElementById('timerDisplay').innerText = "✅";
+        document.getElementById('btnPlay').style.display = 'none';
+        speak("Entrenamiento completado");
+    }
+
+    function speak(t) {
+        synth.cancel();
+        let u = new SpeechSynthesisUtterance(t);
+        u.lang = 'es-ES';
+        synth.speak(u);
+    }
+</script>
+</body>
+</html>
