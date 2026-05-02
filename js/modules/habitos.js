@@ -61,7 +61,7 @@ export async function incrementGamify(key, incrementValue = 1) {
 }
 
 /**
- * Carga las estadísticas de hoy para actualizar el Avatar
+ * Carga las estadísticas de hoy para actualizar el Avatar y el HUD
  */
 export async function loadTodayStats() {
     if (!auth.currentUser) return;
@@ -69,74 +69,67 @@ export async function loadTodayStats() {
     const today = new Date().toISOString().split('T')[0];
     try {
         const doc = await db.collection('gamificacion_diaria').doc(`${auth.currentUser.uid}_${today}`).get();
-        if (doc.exists) {
-            const data = doc.data();
-            const points = calculateDailyPoints(data);
-            updateAvatarUI(points);
-        } else {
-            updateAvatarUI(0);
-        }
+        const data = doc.exists ? doc.data() : {};
+        
+        const stats = calculateTrinityPoints(data);
+        updateAvatarUI(stats);
     } catch (e) {
         console.error("Error cargando stats de hoy:", e);
     }
 }
 
-export function calculateDailyPoints(data) {
-    let pts = 0;
-    
-    // Mindfulness: 1:5, 2:8, 3+:10
-    const mind = data.mindfulness_sesiones || 0;
-    if (mind >= 3) pts += 10;
-    else if (mind === 2) pts += 8;
-    else if (mind === 1) pts += 5;
-    
-    // Físico: 1:7, 2+:10
-    const fis = data.fisico_sesiones || 0;
-    if (fis >= 2) pts += 10;
-    else if (fis === 1) pts += 7;
-    
-    // Organizador: 15 pts por planificar mañana
-    if (data.organizador_planificado) pts += 15;
-    
-    // Juegos Mentales: 2 pts por cada 5 minutos
+export function calculateTrinityPoints(data) {
+    // MENTE: Juegos (2pts/5min) + Organizador (15pts)
     const mins = data.juegos_mentales_minutos || 0;
-    pts += Math.floor(mins / 5) * 2;
+    const mentePts = (Math.floor(mins / 5) * 2) + (data.organizador_planificado ? 15 : 0);
     
-    return pts;
+    // CUERPO: Sesiones (7pts por la primera, 3 por el resto)
+    const fis = data.fisico_sesiones || 0;
+    const cuerpoPts = fis > 0 ? 7 + (fis - 1) * 3 : 0;
+    
+    // ESPÍRITU: Mindfulness (5pts por la primera, 3 por el resto)
+    const mind = data.mindfulness_sesiones || 0;
+    const espirituPts = mind > 0 ? 5 + (mind - 1) * 3 : 0;
+    
+    return { mente: mentePts, cuerpo: cuerpoPts, espiritu: espirituPts, total: mentePts + cuerpoPts + espirituPts };
 }
 
-export function updateAvatarUI(pts) {
+export function updateAvatarUI(stats) {
     const avatar = document.getElementById('avatarContainer');
     const name = document.getElementById('energyLevelName');
     const ptsDisplay = document.getElementById('energyPointsDisplay');
-    const bar = document.getElementById('energyBarFill');
     
-    if (!avatar || !name || !ptsDisplay || !bar) return;
+    // Barras de la Trinidad
+    const barMente = document.getElementById('barMente');
+    const barCuerpo = document.getElementById('barCuerpo');
+    const barEspiritu = document.getElementById('barEspiritu');
     
+    if (!avatar || !name || !ptsDisplay) return;
+    
+    const pts = stats.total;
     ptsDisplay.innerHTML = `${Math.floor(pts)} <span style="font-size: 0.7rem; color: #64748b;">PTS</span>`;
+    
+    // Sincronizar barras (Objetivo: 20pts por cada pilar para el 100%)
+    if (barMente) barMente.style.width = `${Math.min((stats.mente / 20) * 100, 100)}%`;
+    if (barCuerpo) barCuerpo.style.width = `${Math.min((stats.cuerpo / 10) * 100, 100)}%`;
+    if (barEspiritu) barEspiritu.style.width = `${Math.min((stats.espiritu / 8) * 100, 100)}%`;
     
     // Reset aura classes
     avatar.classList.remove('aura-base', 'aura-saiyan', 'aura-dios');
     
-    let progress = 0;
     if (pts < 15) {
         avatar.classList.add('aura-base');
-        name.innerText = "Estado: Base";
-        progress = (pts / 15) * 100;
-    } else if (pts < 30) {
+        name.innerText = "BASE";
+    } else if (pts < 35) {
         avatar.classList.add('aura-saiyan');
-        name.innerText = "Estado: Super Saiyan";
+        name.innerText = "SUPER SAIYAN";
         name.style.color = "#fb923c";
-        progress = ((pts - 15) / 15) * 100;
     } else {
         avatar.classList.add('aura-dios');
-        name.innerText = "Estado: Ultra Instinto";
+        name.innerText = "ULTRA INSTINTO";
         name.style.color = "#fff";
         name.style.textShadow = "0 0 10px #22d3ee";
-        progress = 100;
     }
-    
-    bar.style.width = `${progress}%`;
     
     // Actualizar HUD de Misiones Pendientes
     updateMissionsHUD(pts, avatar.classList.contains('aura-dios'));

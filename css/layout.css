@@ -59,6 +59,20 @@
 .mission-pending { border-color: #f59e0b; color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
 
 .hud-footer { margin-top: auto; }
+/* HUD DE LA TRINIDAD (MENTE, CUERPO, ESPÍRITU) */
+.trinity-hud { width: 100%; display: flex; flex-direction: column; gap: 18px; }
+.trinity-item { width: 100%; }
+.trinity-label { font-size: 0.7rem; font-weight: 900; color: #94a3b8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; letter-spacing: 1px; }
+.energy-bar-bg.small { height: 10px; border-radius: 5px; }
+
+.mente-bar { background: linear-gradient(90deg, #3b82f6, #60a5fa) !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4) !important; }
+.cuerpo-bar { background: linear-gradient(90deg, #ef4444, #f87171) !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important; }
+.espiritu-bar { background: linear-gradient(90deg, #10b981, #34d399) !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4) !important; }
+
+/* REFUERZO DE GLASSMORPHISM */
+.glass-card { background: rgba(255, 255, 255, 0.03) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08) !important; }
+
+.hud-footer { margin-top: auto; }
 .btn-logout { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #64748b; padding: 12px; width: 100%; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; }
 .btn-logout:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
 
