@@ -33,11 +33,24 @@
 
     <div class="screen hidden" id="screenMain">
         <div class="dashboard-gamer-layout">
-            <!-- IZQUIERDA: SALÓN DEL PERSONAJE (SKIN) -->
-            <div class="character-section">
-                <div id="avatarContainer" class="skin-container aura-base">
-                    <img id="userAvatar" src="avatar_goku_nivelSuperInstinto.png" alt="Skin" class="skin-avatar">
-                    <div class="aura-visual"></div>
+            <!-- IZQUIERDA: TAMAGOTCHI 3D EVOLUTIVO -->
+            <div class="character-section tamagotchi-room">
+                <div class="tamagotchi-container">
+                    <div id="avatar3D" class="avatar-3d-wrapper aura-base">
+                        <img id="userAvatar" src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=base" alt="Tamagotchi Phase" class="skin-3d">
+                        <div class="aura-visual-3d"></div>
+                    </div>
+                    
+                    <!-- HUD DE LA MASCOTA -->
+                    <div class="mascot-ui glass-card">
+                        <div class="xp-header">
+                            <span class="xp-level">NIVEL: <span id="mascotLevel">BÁSICO</span></span>
+                            <span class="xp-pct"><span id="xpPercentDisplay">0</span>% XP</span>
+                        </div>
+                        <div class="xp-bar-bg">
+                            <div id="xpBarFill" class="xp-bar-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

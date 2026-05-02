@@ -4,46 +4,42 @@
 .exit-left { transform: translateY(-50px) scale(0.95); opacity: 0; pointer-events: none; }
 
 /* DISEÑO ORIGINAL V23 DE LAS TARJETAS (ESTILO ALBA) */
-/* LAYOUT GAMER HUD */
-.dashboard-gamer-layout { display: flex; width: 100%; max-width: 1400px; height: 100vh; gap: 20px; padding: 20px; margin: 0 auto; overflow: hidden; }
+/* TAMAGOTCHI 3D EVOLUTIVO */
+.tamagotchi-room { flex: 1.2; display: flex; align-items: center; justify-content: center; perspective: 1000px; }
+.tamagotchi-container { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 40px; }
 
-/* IZQUIERDA: PERSONAJE */
-.character-section { flex: 1; display: flex; align-items: flex-end; justify-content: center; position: relative; }
-.skin-container { position: relative; height: 95%; display: flex; align-items: flex-end; justify-content: center; width: 100%; }
-.skin-avatar { height: 100%; width: auto; object-fit: contain; z-index: 2; filter: drop-shadow(0 0 30px rgba(0,0,0,0.5)); transition: all 0.5s ease; mask-image: linear-gradient(to bottom, black 90%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%); }
-.aura-visual { position: absolute; bottom: 10%; width: 300px; height: 300px; border-radius: 50%; z-index: 1; opacity: 0; transition: all 1s ease; filter: blur(40px); }
+.avatar-3d-wrapper { position: relative; width: 320px; height: 320px; display: flex; align-items: center; justify-content: center; transform-style: preserve-3d; animation: floatMascot 4s ease-in-out infinite; }
+.skin-3d { width: 85%; height: 85%; object-fit: contain; z-index: 2; animation: rotateMascot 10s linear infinite; filter: drop-shadow(0 0 20px rgba(0,0,0,0.4)); }
 
-/* DERECHA: HUD */
-.hud-section { flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 20px; overflow-y: auto; }
-.hud-card { padding: 25px; display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; }
-.header-hud { background: rgba(15, 23, 42, 0.8) !important; border-left: 5px solid var(--primary) !important; }
-.hud-greeting { font-size: 2.5rem; font-weight: 900; margin: 0; }
-.hud-rank { font-size: 0.9rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin-top: 5px; }
+/* AURAS 3D */
+.aura-visual-3d { position: absolute; width: 120%; height: 120%; border-radius: 50%; z-index: 1; filter: blur(50px); opacity: 0.3; transition: all 1s ease; }
 
-.points-label { font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-align: right; }
-.points-value { font-size: 2.2rem; font-weight: 950; color: #fff; line-height: 1; text-align: right; }
+.phase-base .aura-visual-3d { background: radial-gradient(circle, #3b82f6 0%, transparent 70%); }
+.phase-evolved .aura-visual-3d { background: radial-gradient(circle, #fb923c 0%, transparent 70%); opacity: 0.5; }
+.phase-ultimate .aura-visual-3d { background: radial-gradient(circle, #fff 0%, #22d3ee 50%, transparent 80%); opacity: 0.8; animation: godPulse 1s infinite; }
 
-/* MISIONES GRID */
-.missions-container { flex: 1; }
-.missions-title { font-size: 0.8rem; font-weight: 900; color: #64748b; margin-bottom: 15px; letter-spacing: 3px; }
-.missions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-.mission-card { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(255,255,255,0.03) !important; text-align: center; }
-.mission-card:hover { transform: translateY(-5px) scale(1.05); background: rgba(255,255,255,0.08) !important; border-color: var(--primary) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-.mission-icon { font-size: 2rem; }
-.mission-text { font-weight: 800; font-size: 0.85rem; letter-spacing: 1px; }
+/* HUD MASCOTA */
+.mascot-ui { width: 300px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.xp-header { display: flex; justify-content: space-between; align-items: flex-end; }
+.xp-level { font-size: 0.8rem; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
+.xp-pct { font-size: 0.9rem; font-weight: 800; color: #fff; }
 
-/* NIVELES DE SKIN DINÁMICOS */
-/* Nivel 1: BASE */
-.aura-base .skin-avatar { filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.2)); }
-.aura-base .aura-visual { opacity: 0.2; background: radial-gradient(circle, #38bdf8 0%, transparent 70%); animation: pulseSlow 5s infinite; }
+.xp-bar-bg { width: 100%; height: 12px; background: rgba(0,0,0,0.4); border-radius: 50px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+.xp-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #22d3ee); width: 0%; border-radius: 50px; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 15px rgba(34, 211, 238, 0.4); }
 
-/* Nivel 2: POWER-UP (NARANJA) */
-.aura-saiyan .skin-avatar { transform: scale(1.02); filter: drop-shadow(0 0 40px rgba(251, 146, 60, 0.6)); animation: shakeLow 0.2s infinite; }
-.aura-saiyan .aura-visual { opacity: 0.5; background: radial-gradient(circle, #fb923c 0%, transparent 70%); animation: pulseFast 1s infinite; }
+/* ANIMACIONES */
+@keyframes rotateMascot { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+@keyframes floatMascot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
-/* Nivel 3: GOD-MODE (ULTRA) */
-.aura-dios .skin-avatar { transform: scale(1.05) translateY(-10px); filter: drop-shadow(0 0 60px #fff) drop-shadow(0 0 100px #22d3ee); animation: shakeHigh 0.1s infinite; }
-.aura-dios .aura-visual { opacity: 0.8; background: radial-gradient(circle, #fff 0%, #22d3ee 40%, transparent 70%); animation: pulseUltra 0.3s infinite; }
+/* VELOCIDADES POR NIVEL */
+.phase-ultimate .skin-3d { animation-duration: 4s; filter: drop-shadow(0 0 40px #22d3ee); }
+
+/* RESPONSIVE */
+@media (max-width: 968px) {
+    .tamagotchi-room { height: 45vh; min-height: 400px; }
+    .avatar-3d-wrapper { width: 240px; height: 240px; }
+    .mascot-ui { width: 90%; }
+}
 
 @keyframes pulseSlow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 @keyframes pulseFast { 0%, 100% { transform: scale(1.1); opacity: 0.4; } 50% { transform: scale(1.5); opacity: 0.6; } }

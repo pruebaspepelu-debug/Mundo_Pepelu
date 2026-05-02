@@ -95,44 +95,55 @@ export function calculateTrinityPoints(data) {
 }
 
 export function updateAvatarUI(stats) {
-    const avatar = document.getElementById('avatarContainer');
-    const name = document.getElementById('energyLevelName');
+    const avatar = document.getElementById('avatar3D');
+    const img = document.getElementById('userAvatar');
+    const name = document.getElementById('energyLevelName'); // HUD Persona
     const ptsDisplay = document.getElementById('energyPointsDisplay');
     
-    // Barras de la Trinidad
+    // HUD Mascota
+    const mascotLevel = document.getElementById('mascotLevel');
+    const xpPercent = document.getElementById('xpPercentDisplay');
+    const xpBar = document.getElementById('xpBarFill');
+    
+    if (!avatar || !img || !mascotLevel) return;
+    
+    const pts = stats.total;
+    const goal = 60; // Objetivo diario para 100% XP
+    const pct = Math.min((pts / goal) * 100, 100);
+    
+    ptsDisplay.innerHTML = `${Math.floor(pts)} <span style="font-size: 0.7rem; color: #64748b;">PTS</span>`;
+    
+    // Actualizar XP Bar
+    if (xpBar) xpBar.style.width = `${pct}%`;
+    if (xpPercent) xpPercent.innerText = Math.floor(pct);
+    
+    // Lógica de Fases
+    avatar.classList.remove('phase-base', 'phase-evolved', 'phase-ultimate');
+    
+    if (pct < 30) {
+        avatar.classList.add('phase-base');
+        mascotLevel.innerText = "BÁSICO";
+        img.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=base&backgroundColor=0f172a";
+    } else if (pct < 80) {
+        avatar.classList.add('phase-evolved');
+        mascotLevel.innerText = "EVOLUCIONADO";
+        img.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=power&backgroundColor=0f172a";
+    } else {
+        avatar.classList.add('phase-ultimate');
+        mascotLevel.innerText = "DEFINITIVO";
+        img.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=ultimate&backgroundColor=0f172a";
+    }
+    
+    // Sincronizar barras de la Trinidad
     const barMente = document.getElementById('barMente');
     const barCuerpo = document.getElementById('barCuerpo');
     const barEspiritu = document.getElementById('barEspiritu');
-    
-    if (!avatar || !name || !ptsDisplay) return;
-    
-    const pts = stats.total;
-    ptsDisplay.innerHTML = `${Math.floor(pts)} <span style="font-size: 0.7rem; color: #64748b;">PTS</span>`;
-    
-    // Sincronizar barras (Objetivo: 20pts por cada pilar para el 100%)
     if (barMente) barMente.style.width = `${Math.min((stats.mente / 20) * 100, 100)}%`;
     if (barCuerpo) barCuerpo.style.width = `${Math.min((stats.cuerpo / 10) * 100, 100)}%`;
     if (barEspiritu) barEspiritu.style.width = `${Math.min((stats.espiritu / 8) * 100, 100)}%`;
-    
-    // Reset aura classes
-    avatar.classList.remove('aura-base', 'aura-saiyan', 'aura-dios');
-    
-    if (pts < 15) {
-        avatar.classList.add('aura-base');
-        name.innerText = "BASE";
-    } else if (pts < 35) {
-        avatar.classList.add('aura-saiyan');
-        name.innerText = "SUPER SAIYAN";
-        name.style.color = "#fb923c";
-    } else {
-        avatar.classList.add('aura-dios');
-        name.innerText = "ULTRA INSTINTO";
-        name.style.color = "#fff";
-        name.style.textShadow = "0 0 10px #22d3ee";
-    }
-    
+
     // Actualizar HUD de Misiones Pendientes
-    updateMissionsHUD(pts, avatar.classList.contains('aura-dios'));
+    updateMissionsHUD(pts, pct >= 80);
 }
 
 function updateMissionsHUD(pts, isGodMode) {
