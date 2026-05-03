@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="./css/modules/mindfulness.css">
     <link rel="stylesheet" href="./css/modules/juegos.css">
     <link rel="stylesheet" href="./css/modules/organizador.css">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 </head>
 <body>
 
@@ -33,13 +34,20 @@
 
     <div class="screen hidden" id="screenMain">
         <div class="dashboard-gamer-layout">
-            <!-- IZQUIERDA: TAMAGOTCHI 3D EVOLUTIVO -->
+            <!-- IZQUIERDA: VISOR 5D INTERACTIVO -->
             <div class="character-section tamagotchi-room">
                 <div class="tamagotchi-container">
-                    <div id="avatar3D" class="avatar-3d-wrapper aura-base">
-                        <img id="userAvatar" src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=base" alt="Tamagotchi Phase" class="skin-3d">
-                        <div class="aura-visual-3d"></div>
-                    </div>
+                    <model-viewer 
+                        src="dragon_fase1.glb" 
+                        camera-controls 
+                        disable-zoom 
+                        auto-rotate 
+                        rotation-per-second="2deg" 
+                        shadow-intensity="1" 
+                        environment-image="neutral" 
+                        exposure="1.2" 
+                        class="avatar-5d">
+                    </model-viewer>
                     
                     <!-- HUD DE LA MASCOTA -->
                     <div class="mascot-ui glass-card">

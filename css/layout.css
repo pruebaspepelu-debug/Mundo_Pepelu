@@ -4,6 +4,20 @@
 .exit-left { transform: translateY(-50px) scale(0.95); opacity: 0; pointer-events: none; }
 
 /* DISEÑO ORIGINAL V23 DE LAS TARJETAS (ESTILO ALBA) */
+.avatar-5d {
+    width: 100%;
+    height: 450px;
+    background-color: transparent;
+    animation: levitar 4s ease-in-out infinite;
+    outline: none;
+}
+
+@keyframes levitar {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
 /* TAMAGOTCHI 3D EVOLUTIVO */
 .tamagotchi-room { flex: 1.2; display: flex; align-items: center; justify-content: center; perspective: 1000px; }
 .tamagotchi-container { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 40px; }
