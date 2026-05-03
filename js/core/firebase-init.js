@@ -14,7 +14,8 @@ auth.onAuthStateChanged((user) => {
         const isPepelu = user.email === 'joseluisruedas.jlr@gmail.com';
         currentUser = user.displayName || (isPepelu ? "Pepelu" : user.email.split('@')[0]);
         
-        document.getElementById('displayUser').innerText = currentUser;
+        const displayEl = document.getElementById('displayUser');
+        if (displayEl) displayEl.innerText = currentUser;
         
         // Asignación de Skin
         const avatarImg = document.getElementById('userAvatar');

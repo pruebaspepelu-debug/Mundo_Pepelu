@@ -16,6 +16,49 @@ auth.onAuthStateChanged((user) => {
     if (user) loadTodayStats();
 });
 
+// =========================================
+// NAVEGACIÓN DINÁMICA (MODO DIOS)
+// =========================================
+window.showSubMenu = function(module, el) {
+    const container = document.getElementById('subMenuContainer');
+    if (!container) return;
+
+    container.classList.remove('hidden');
+    
+    // Feedback visual en pestañas
+    document.querySelectorAll('.hud-tab').forEach(tab => tab.classList.remove('active'));
+    el.classList.add('active');
+
+    let html = '';
+    switch(module) {
+        case 'fisico':
+            html = `
+                <div class="mission-card" onclick="openFisicoHub()"><span>🔥</span> FUERZA / REHAB</div>
+                <div class="mission-card" onclick="openEstiramientosHub()"><span>🧘</span> ESTIRAMIENTOS</div>
+            `;
+            break;
+        case 'juegos':
+            html = `
+                <div class="mission-card" onclick="openGamesHub()"><span>🎮</span> ENTRENAMIENTO</div>
+                <div class="mission-card" onclick="openRanking()"><span>🏆</span> RANKING</div>
+            `;
+            break;
+        case 'organizador':
+            html = `
+                <div class="mission-card" onclick="openOrganizador()"><span>📅</span> AGENDA</div>
+                <div class="mission-card" onclick="openHabitosModal()"><span>🔥</span> CONSTANCIA</div>
+            `;
+            break;
+        case 'mindfulness':
+            html = `
+                <div class="mission-card" onclick="openBreatheHub()"><span>🧘</span> SESIÓN ZEN</div>
+            `;
+            break;
+    }
+    
+    container.innerHTML = html;
+};
+
 window.handleLogin = function() {
     let email = document.getElementById('loginEmail').value.trim();
     let pass = document.getElementById('loginPass').value.trim();

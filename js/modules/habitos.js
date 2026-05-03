@@ -61,8 +61,10 @@ export async function incrementGamify(key, incrementValue = 1) {
 }
 
 /**
- * Carga las estadísticas de hoy para actualizar el Avatar y el HUD
+ * Motor de Interfaz HUD TRADING / GAMER PRO
  */
+let chartInstance = null;
+
 export async function loadTodayStats() {
     if (!auth.currentUser) return;
     
@@ -71,80 +73,145 @@ export async function loadTodayStats() {
         const doc = await db.collection('gamificacion_diaria').doc(`${auth.currentUser.uid}_${today}`).get();
         const data = doc.exists ? doc.data() : {};
         
-        const stats = calculateTrinityPoints(data);
-        updateAvatarUI(stats);
+        const xpStats = calculateDailyXP(data);
+        updateAvatarUI(xpStats);
+        updateGauges(xpStats);
+        initTradingChart();
     } catch (e) {
-        console.error("Error cargando stats de hoy:", e);
+        console.error("Error cargando XP diario:", e);
     }
 }
 
-export function calculateTrinityPoints(data) {
-    // MENTE: Juegos (2pts/5min) + Organizador (15pts)
-    const mins = data.juegos_mentales_minutos || 0;
-    const mentePts = (Math.floor(mins / 5) * 2) + (data.organizador_planificado ? 15 : 0);
-    
-    // CUERPO: Sesiones (7pts por la primera, 3 por el resto)
-    const fis = data.fisico_sesiones || 0;
-    const cuerpoPts = fis > 0 ? 7 + (fis - 1) * 3 : 0;
-    
-    // ESPÍRITU: Mindfulness (5pts por la primera, 3 por el resto)
-    const mind = data.mindfulness_sesiones || 0;
-    const espirituPts = mind > 0 ? 5 + (mind - 1) * 3 : 0;
-    
-    return { mente: mentePts, cuerpo: cuerpoPts, espiritu: espirituPts, total: mentePts + cuerpoPts + espirituPts };
+export function updateGauges(xp) {
+    const setGauge = (id, valId, percent) => {
+        const fill = document.querySelector(`.gauge-fill.${id}`);
+        const text = document.getElementById(valId);
+        if (fill) {
+            const offset = 283 - (Math.min(percent, 100) / 100) * 283;
+            fill.style.strokeDashoffset = offset;
+        }
+        if (text) text.innerText = `${Math.floor(percent)}%`;
+    };
+
+    // Mapeo de métricas según requerimiento
+    setGauge('mente', 'valFocus', (xp.mente + xp.organizador) / 50 * 100);
+    setGauge('fisico', 'valPower', (xp.fisico / 30 * 100));
+    setGauge('mindfulness', 'valZen', (xp.mindfulness / 20 * 100));
 }
 
-export function updateAvatarUI(stats) {
-    const avatar = document.getElementById('avatar3D');
-    const img = document.getElementById('userAvatar');
-    const name = document.getElementById('energyLevelName'); // HUD Persona
+export async function initTradingChart() {
+    const container = document.getElementById('trading-chart-container');
+    if (!container || chartInstance) return;
+
+    chartInstance = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 450,
+        layout: {
+            background: { type: 'solid', color: 'transparent' },
+            textColor: '#94a3b8',
+        },
+        grid: {
+            vertLines: { color: 'rgba(255, 255, 255, 0.02)' },
+            horzLines: { color: 'rgba(255, 255, 255, 0.02)' },
+        },
+        timeScale: { borderVisible: false },
+        rightPriceScale: { borderVisible: false }
+    });
+
+    const candleSeries = chartInstance.addCandlestickSeries({
+        upColor: '#00ff88', downColor: '#ff0055', borderVisible: false,
+        wickUpColor: '#00ff88', wickDownColor: '#ff0055',
+    });
+
+    // Cargar datos de los últimos 7 días
+    const last7Days = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        last7Days.push(d.toISOString().split('T')[0]);
+    }
+
+    try {
+        const snapshot = await db.collection('gamificacion_diaria')
+            .where('uid', '==', auth.currentUser.uid)
+            .where('date', '>=', last7Days[0])
+            .get();
+
+        const dataMap = {};
+        snapshot.forEach(doc => dataMap[doc.data().date] = doc.data());
+
+        const chartData = last7Days.map(date => {
+            const dayData = dataMap[date] || {};
+            const xp = calculateDailyXP(dayData).total;
+            return {
+                time: date,
+                open: xp * 0.8 || 10,
+                high: xp * 1.1 || 20,
+                low: xp * 0.7 || 5,
+                close: xp || 15
+            };
+        });
+
+        // INYECTAR DATOS DE PRUEBA (DUMMY DATA) PARA VER EL DISEÑO:
+        candleSeries.setData([
+            { time: '2026-04-27', open: 10, high: 40, low: 10, close: 35 },
+            { time: '2026-04-28', open: 35, high: 60, low: 30, close: 50 },
+            { time: '2026-04-29', open: 50, high: 55, low: 20, close: 25 }, // Día malo (rojo)
+            { time: '2026-04-30', open: 25, high: 70, low: 25, close: 65 },
+            { time: '2026-05-01', open: 65, high: 80, low: 60, close: 75 },
+            { time: '2026-05-02', open: 75, high: 100, low: 70, close: 95 }, // Día casi perfecto
+        ]);
+        
+        chartInstance.timeScale().fitContent();
+    } catch (e) { console.error(e); }
+}
+
+export function calculateDailyXP(data) {
+    let fisico = 0;
+    let mente = 0;
+    let organizador = 0;
+    let mindfulness = 0;
+
+    // 1. MÓDULO FÍSICO (Máx 30 pts)
+    if (data.fisico_sesion_fuerte) fisico += 20;
+    const estiramientos = data.fisico_estiramientos || 0;
+    fisico += Math.min(estiramientos, 2) * 5;
+    fisico = Math.min(fisico, 30);
+
+    // 2. JUEGOS MENTALES (Máx 20 pts)
+    if (data.juegos_minutos >= 10) mente += 15;
+    if (data.juegos_nuevo_record) mente += 5;
+    mente = Math.min(mente, 20);
+
+    // 3. MÓDULO ORGANIZADOR (Máx 30 pts)
+    if (data.organizador_cumplimiento >= 75) organizador += 15;
+    if (data.organizador_foco_completado) organizador += 10;
+    if (data.organizador_minutos >= 10) organizador += 5;
+    organizador = Math.min(organizador, 30);
+
+    // 4. MÓDULO MINDFULNESS (Máx 20 pts)
+    const mindSessions = data.mindfulness_sesiones_largas || 0;
+    mindfulness += Math.min(mindSessions, 2) * 10;
+    mindfulness = Math.min(mindfulness, 20);
+
+    return { fisico, mente, organizador, mindfulness, total: fisico + mente + organizador + mindfulness };
+}
+
+export function updateAvatarUI(xpStats) {
     const ptsDisplay = document.getElementById('energyPointsDisplay');
-    
-    // HUD Mascota
-    const mascotLevel = document.getElementById('mascotLevel');
     const xpPercent = document.getElementById('xpPercentDisplay');
     const xpBar = document.getElementById('xpBarFill');
     
-    if (!avatar || !img || !mascotLevel) return;
+    const totalXP = xpStats.total;
+    const pct = Math.min((totalXP / 100) * 100, 100);
     
-    const pts = stats.total;
-    const goal = 60; // Objetivo diario para 100% XP
-    const pct = Math.min((pts / goal) * 100, 100);
-    
-    ptsDisplay.innerHTML = `${Math.floor(pts)} <span style="font-size: 0.7rem; color: #64748b;">PTS</span>`;
-    
-    // Actualizar XP Bar
+    if (ptsDisplay) ptsDisplay.innerText = `${Math.floor(totalXP)} XP`;
     if (xpBar) xpBar.style.width = `${pct}%`;
     if (xpPercent) xpPercent.innerText = Math.floor(pct);
-    
-    // Lógica de Fases
-    avatar.classList.remove('phase-base', 'phase-evolved', 'phase-ultimate');
-    
-    if (pct < 30) {
-        avatar.classList.add('phase-base');
-        mascotLevel.innerText = "BÁSICO";
-        img.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=base&backgroundColor=0f172a";
-    } else if (pct < 80) {
-        avatar.classList.add('phase-evolved');
-        mascotLevel.innerText = "EVOLUCIONADO";
-        img.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=power&backgroundColor=0f172a";
-    } else {
-        avatar.classList.add('phase-ultimate');
-        mascotLevel.innerText = "DEFINITIVO";
-        img.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=ultimate&backgroundColor=0f172a";
-    }
-    
-    // Sincronizar barras de la Trinidad
-    const barMente = document.getElementById('barMente');
-    const barCuerpo = document.getElementById('barCuerpo');
-    const barEspiritu = document.getElementById('barEspiritu');
-    if (barMente) barMente.style.width = `${Math.min((stats.mente / 20) * 100, 100)}%`;
-    if (barCuerpo) barCuerpo.style.width = `${Math.min((stats.cuerpo / 10) * 100, 100)}%`;
-    if (barEspiritu) barEspiritu.style.width = `${Math.min((stats.espiritu / 8) * 100, 100)}%`;
-
-    // Actualizar HUD de Misiones Pendientes
-    updateMissionsHUD(pts, pct >= 80);
 }
+
+// ... rest of the file (heatmap etc) kept for compatibility ...
 
 function updateMissionsHUD(pts, isGodMode) {
     const container = document.getElementById('missionsHUDList');
