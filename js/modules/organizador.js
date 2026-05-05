@@ -231,11 +231,46 @@ export function loadPlan(dateStr = null) {
     if (savedPlan) {
         try {
             const planData = JSON.parse(savedPlan);
-            currentSnapshotData = {
-                focus: planData.focus || ["", "", ""],
-                schedule: planData.schedule || {},
-                focusDone: planData.focusDone || [false, false, false]
-            };
+            
+            // Lógica de Migración: Si venimos de la versión v1 (array de 'tasks')
+            if (planData.tasks && (!planData.focus || planData.focus.every(f => !f))) {
+                const legacyFocus = planData.tasks.filter(t => t.isFocus);
+                const legacyOther = planData.tasks.filter(t => !t.isFocus);
+                
+                currentSnapshotData.focus = [
+                    legacyFocus[0] ? legacyFocus[0].text : "",
+                    legacyFocus[1] ? legacyFocus[1].text : "",
+                    legacyFocus[2] ? legacyFocus[2].text : ""
+                ];
+                currentSnapshotData.focusDone = [
+                    legacyFocus[0] ? !!legacyFocus[0].isDone : false,
+                    legacyFocus[1] ? !!legacyFocus[1].isDone : false,
+                    legacyFocus[2] ? !!legacyFocus[2].isDone : false
+                ];
+                
+                currentSnapshotData.schedule = {};
+                legacyOther.forEach((t, i) => {
+                    // Distribuir en slots de 30 min desde las 09:00
+                    let slotHour = 9 + Math.floor(i / 2);
+                    let slotMin = (i % 2 === 0) ? "00" : "30";
+                    if (slotHour <= 23) {
+                        let timeKey = `${slotHour.toString().padStart(2, '0')}:${slotMin}`;
+                        currentSnapshotData.schedule[timeKey] = { text: t.text, isDone: !!t.isDone };
+                    }
+                });
+                
+                // Guardar migración para que persista
+                planData.focus = currentSnapshotData.focus;
+                planData.focusDone = currentSnapshotData.focusDone;
+                planData.schedule = currentSnapshotData.schedule;
+                localStorage.setItem('snapshot_plan', JSON.stringify(planData));
+            } else {
+                currentSnapshotData = {
+                    focus: planData.focus || ["", "", ""],
+                    schedule: planData.schedule || {},
+                    focusDone: planData.focusDone || [false, false, false]
+                };
+            }
             
             if (planData.date === today) {
                 snapshotPhase = 2;
