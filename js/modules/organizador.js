@@ -158,11 +158,12 @@ async function deleteIdea(id) {
 }
 
 // =========================================
-// PLANIFICADOR DIARIO
+// SELECCIÓN DE IDEAS PARA PLANIFICADOR
 // =========================================
 export function openIdeaSelector(inputId) {
     activeFocusInput = inputId;
     const list = document.getElementById('ideaSelectorList');
+    if (!list) return;
     list.innerHTML = '';
     
     if (cachedIdeas.length === 0) {
@@ -177,197 +178,308 @@ export function openIdeaSelector(inputId) {
         });
     }
     
-    document.getElementById('ideaSelectorModal').classList.remove('hidden');
+    const modal = document.getElementById('ideaSelectorModal');
+    if (modal) modal.classList.remove('hidden');
 }
 
 export function closeIdeaSelector() {
-    document.getElementById('ideaSelectorModal').classList.add('hidden');
+    const modal = document.getElementById('ideaSelectorModal');
+    if (modal) modal.classList.add('hidden');
     activeFocusInput = null;
 }
 
 export function selectIdea(text) {
     if (activeFocusInput) {
-        document.getElementById(activeFocusInput).value = text;
+        const input = document.getElementById(activeFocusInput);
+        if (input) input.value = text;
+        
+        // Si el input activo es el de snapshot, lo procesamos
+        if (activeFocusInput === 'snapshotInput') {
+             // addSnapshotTask logic? No, just set value.
+        }
+        
         closeIdeaSelector();
     }
 }
 
-function generateAgendaHTML() {
-    const list = document.getElementById('agendaList');
-    if (list.children.length > 0) return; // Ya generado
-    
-    let html = '';
-    const currentHour = new Date().getHours();
-    const currentMin = new Date().getMinutes();
-    
-    for (let h = 6; h <= 23; h++) {
-        let hourStr = h.toString().padStart(2, '0');
-        
-        let isCurrent00 = (h === currentHour && currentMin < 30);
-        let rowClass00 = isCurrent00 ? "agenda-row current-hour" : "agenda-row";
-        
-        let isCurrent30 = (h === currentHour && currentMin >= 30);
-        let rowClass30 = isCurrent30 ? "agenda-row current-hour" : "agenda-row";
-        
-        html += `
-            <div class="${rowClass00}">
-                <span class="agenda-time">${hourStr}:00</span>
-                <input type="text" class="agenda-input" id="agenda-${hourStr}:00" placeholder="..." autocomplete="off">
-                <button class="idea-bulb-btn" onclick="openIdeaSelector('agenda-${hourStr}:00')" title="Añadir idea">💡</button>
-            </div>
-            <div class="${rowClass30}">
-                <span class="agenda-time">${hourStr}:30</span>
-                <input type="text" class="agenda-input" id="agenda-${hourStr}:30" placeholder="..." autocomplete="off">
-                <button class="idea-bulb-btn" onclick="openIdeaSelector('agenda-${hourStr}:30')" title="Añadir idea">💡</button>
-            </div>
-        `;
-    }
-    list.innerHTML = html;
-}
+// =========================================
+// SISTEMA SNAPSHOT (PLANIFICADOR DIARIO)
+// =========================================
+
+// =========================================
+// SISTEMA SNAPSHOT (PLANIFICADOR DIARIO)
+// =========================================
+
+export let currentSnapshotData = {
+    focus: ["", "", ""],
+    schedule: {} // { "06:00": { text: "...", isDone: false }, ... }
+};
+let snapshotPhase = 1; // 1: Edición, 2: Lectura, 3: Auditoría
 
 function getTodayString() {
     const today = new Date();
-    // Ajuste de zona horaria local para evitar que getISOString devuelva ayer a última hora
     const offset = today.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(today.getTime() - offset)).toISOString().slice(0, 10);
-    return localISOTime;
+    return (new Date(today.getTime() - offset)).toISOString().slice(0, 10);
 }
 
-export let currentLoadedDate = null;
-
-export async function loadPlan(dateStr = null) {
+export function loadPlan(dateStr = null) {
     if (!dateStr) dateStr = getTodayString();
-    currentLoadedDate = dateStr;
     
-    generateAgendaHTML();
+    const savedPlan = localStorage.getItem('snapshot_plan');
+    const today = getTodayString();
     
-    const label = document.getElementById('planDateLabel');
-    if (label) {
-        label.innerText = (dateStr === getTodayString()) ? "Plan de Hoy" : "Plan del " + dateStr.split('-').reverse().join('/');
-    }
-
-    if (!auth.currentUser) return;
-
-    try {
-        const doc = await db.collection('diarios').doc(`${auth.currentUser.uid}_${dateStr}`).get();
-        if (doc.exists) {
-            const data = doc.data();
+    if (savedPlan) {
+        try {
+            const planData = JSON.parse(savedPlan);
+            currentSnapshotData = {
+                focus: planData.focus || ["", "", ""],
+                schedule: planData.schedule || {},
+                focusDone: planData.focusDone || [false, false, false]
+            };
             
-            document.getElementById('focus1').value = data.focus[0] || '';
-            document.getElementById('focus2').value = data.focus[1] || '';
-            document.getElementById('focus3').value = data.focus[2] || '';
-            
-            for (let h = 6; h <= 23; h++) {
-                let hourStr = h.toString().padStart(2, '0');
-                let times = [`${hourStr}:00`, `${hourStr}:30`];
-                
-                times.forEach(timeStr => {
-                    if (data.schedule && data.schedule[timeStr]) {
-                        document.getElementById(`agenda-${timeStr}`).value = data.schedule[timeStr];
-                    } else {
-                        document.getElementById(`agenda-${timeStr}`).value = '';
-                    }
-                });
+            if (planData.date === today) {
+                snapshotPhase = 2;
+                renderSnapshotPhase2();
+            } else if (planData.date < today) {
+                snapshotPhase = 3;
+                renderSnapshotPhase3();
+            } else {
+                snapshotPhase = 1;
+                renderSnapshotPhase1();
             }
-        } else {
-            // No hay plan hoy, limpiamos
-            document.getElementById('focus1').value = '';
-            document.getElementById('focus2').value = '';
-            document.getElementById('focus3').value = '';
-            for (let h = 6; h <= 23; h++) {
-                let hourStr = h.toString().padStart(2, '0');
-                document.getElementById(`agenda-${hourStr}:00`).value = '';
-                document.getElementById(`agenda-${hourStr}:30`).value = '';
-            }
+        } catch (e) {
+            console.error("Error parseando snapshot_plan", e);
+            snapshotPhase = 1;
+            renderSnapshotPhase1();
         }
-    } catch (error) {
-        console.error("Error al cargar agenda: ", error);
+    } else {
+        currentSnapshotData = { focus: ["", "", ""], schedule: {}, focusDone: [false, false, false] };
+        snapshotPhase = 1;
+        renderSnapshotPhase1();
     }
 }
 
-export async function guardarPlan(silent = false, btnElement = null) {
-    if (!auth.currentUser) {
-        if (!silent) alert("No estás autenticado.");
+export function sellarPlan() {
+    // Recoger Foco
+    const f1 = document.getElementById('snapFocus1').value.trim();
+    const f2 = document.getElementById('snapFocus2').value.trim();
+    const f3 = document.getElementById('snapFocus3').value.trim();
+    
+    if (!f1 && !f2 && !f3) {
+        alert("Define al menos un objetivo de foco antes de sellar.");
         return;
     }
-
-    const dateStr = currentLoadedDate || getTodayString();
     
-    const focus = [
-        document.getElementById('focus1').value.trim(),
-        document.getElementById('focus2').value.trim(),
-        document.getElementById('focus3').value.trim()
-    ];
-    
+    // Recoger Horario
     const schedule = {};
     for (let h = 6; h <= 23; h++) {
-        let hourStr = h.toString().padStart(2, '0');
-        let timeStr00 = `${hourStr}:00`;
-        let timeStr30 = `${hourStr}:30`;
-        schedule[timeStr00] = document.getElementById(`agenda-${timeStr00}`).value.trim();
-        schedule[timeStr30] = document.getElementById(`agenda-${timeStr30}`).value.trim();
-    }
-    
-    try {
-        await db.collection('diarios').doc(`${auth.currentUser.uid}_${dateStr}`).set({
-            user: auth.currentUser.uid,
-            date: dateStr,
-            focus: focus,
-            schedule: schedule,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        let hStr = h.toString().padStart(2, '0');
+        let times = [`${hStr}:00`, `${hStr}:30`];
+        times.forEach(t => {
+            const val = document.getElementById(`snap-${t}`).value.trim();
+            if (val) schedule[t] = { text: val, isDone: false };
         });
-        
-        // Conexión con Mapa de Constancia (Hábito: Planificar mañana)
-        const todayStr = getTodayString();
-        const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-        
-        if (dateStr === tomorrowStr) {
-            incrementGamify('organizador_planificado', 1);
-        } else if (dateStr === todayStr) {
-            // También podemos marcarlo si planifica el mismo día, 
-            // pero la orden específica es "para la fecha de mañana"
-        }
-        
-        // Rastreador Silencioso: Registro de actividad
-        try {
-            await db.collection('user_activity').add({
-                uid: auth.currentUser.uid,
-                date: dateStr,
-                type: "planificacion",
-                status: "completed",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } catch (activityError) {
-            console.error("Aviso: No se pudo registrar la actividad silenciosa.", activityError);
-        }
-        
-        if (btnElement) {
-            const originalText = btnElement.innerText;
-            btnElement.innerText = "¡PLAN FIJADO!";
-            btnElement.classList.add("btn-fijar-success");
-            setTimeout(() => {
-                btnElement.innerText = originalText;
-                btnElement.classList.remove("btn-fijar-success");
-            }, 2500);
-        } else if (!silent) {
-            alert("¡Plan Guardado con éxito!");
-        }
-    } catch (error) {
-        console.error("Error al guardar agenda: ", error);
-        if (!silent) alert("Hubo un error al guardar tu plan.");
+    }
+    // Añadir 00:00 final
+    const val00 = document.getElementById(`snap-00:00`).value.trim();
+    if (val00) schedule["00:00"] = { text: val00, isDone: false };
+
+    const today = getTodayString();
+    const planData = {
+        date: today,
+        focus: [f1, f2, f3],
+        focusDone: [false, false, false],
+        schedule: schedule
+    };
+    
+    localStorage.setItem('snapshot_plan', JSON.stringify(planData));
+    currentSnapshotData = planData;
+    
+    // Gamificación
+    incrementGamify('organizador_planificado', 1);
+    
+    snapshotPhase = 2;
+    renderSnapshotPhase2();
+    
+    const btn = document.getElementById('btnSellarPlan');
+    if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = "¡COMPROMISO SELLADO!";
+        btn.classList.add("btn-fijar-success");
+        setTimeout(() => { btn.innerHTML = orig; btn.classList.remove("btn-fijar-success"); }, 2000);
     }
 }
 
-export async function limpiarDia() {
-    if (!auth.currentUser) return;
-    if (!confirm("¿Estás seguro de que quieres limpiar toda la agenda de este día?")) return;
+export function toggleDoneSnapshot(type, id) {
+    if (snapshotPhase !== 3) return;
     
-    const dateStr = currentLoadedDate || getTodayString();
-    try {
-        await db.collection('diarios').doc(`${auth.currentUser.uid}_${dateStr}`).delete();
-        loadPlan(dateStr); // Recargará y vaciará los campos
-    } catch (error) {
-        console.error("Error al limpiar agenda: ", error);
+    if (type === 'focus') {
+        currentSnapshotData.focusDone[id] = !currentSnapshotData.focusDone[id];
+    } else if (type === 'schedule') {
+        currentSnapshotData.schedule[id].isDone = !currentSnapshotData.schedule[id].isDone;
+    }
+    
+    // Guardar cambio
+    const planData = JSON.parse(localStorage.getItem('snapshot_plan'));
+    planData.focusDone = currentSnapshotData.focusDone;
+    planData.schedule = currentSnapshotData.schedule;
+    localStorage.setItem('snapshot_plan', JSON.stringify(planData));
+    
+    renderSnapshotPhase3();
+}
+
+export function evaluarConstancia() {
+    if (snapshotPhase !== 3) return;
+    
+    const focusTotal = currentSnapshotData.focus.filter(f => f).length;
+    const focusDone = currentSnapshotData.focusDone.filter((d, i) => d && currentSnapshotData.focus[i]).length;
+    
+    const scheduleItems = Object.values(currentSnapshotData.schedule);
+    const scheduleTotal = scheduleItems.length;
+    const scheduleDone = scheduleItems.filter(s => s.isDone).length;
+    
+    const total = focusTotal + scheduleTotal;
+    const completed = focusDone + scheduleDone;
+    
+    if (total === 0) return;
+    
+    const percentage = (completed / total) * 100;
+    let xp = 0;
+    
+    if (percentage >= 75) xp += 15;
+    if (focusTotal > 0 && focusDone === focusTotal) xp += 10;
+    
+    if (xp > 0) {
+        alert(`¡AUDITORÍA COMPLETADA!\nEfectividad: ${Math.round(percentage)}%\nHas extraído +${xp} XP de constancia.`);
+        if (window.updateMascotXP) window.updateMascotXP(xp);
+    } else {
+        alert(`Auditoría finalizada. Efectividad: ${Math.round(percentage)}%. ¡Mañana lo haremos mejor!`);
+    }
+    
+    localStorage.removeItem('snapshot_plan');
+    loadPlan();
+}
+
+// -- RENDERERS --
+
+function renderSnapshotPhase1() {
+    switchPhaseView(1);
+    
+    // Limpiar inputs foco
+    document.getElementById('snapFocus1').value = currentSnapshotData.focus[0];
+    document.getElementById('snapFocus2').value = currentSnapshotData.focus[1];
+    document.getElementById('snapFocus3').value = currentSnapshotData.focus[2];
+    
+    const list = document.getElementById('snapshotTimelineEdit');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    let html = '';
+    for (let h = 6; h <= 23; h++) {
+        let hs = h.toString().padStart(2, '0');
+        [`${hs}:00`, `${hs}:30`].forEach(t => {
+            const val = currentSnapshotData.schedule[t] ? currentSnapshotData.schedule[t].text : '';
+            html += `
+                <div class="agenda-row">
+                    <span class="agenda-time">${t}</span>
+                    <input type="text" class="agenda-input" id="snap-${t}" placeholder="..." value="${val}" autocomplete="off">
+                    <button class="idea-bulb-btn" onclick="openIdeaSelector('snap-${t}')">💡</button>
+                </div>`;
+        });
+    }
+    // 00:00 final
+    const val00 = currentSnapshotData.schedule["00:00"] ? currentSnapshotData.schedule["00:00"].text : '';
+    html += `<div class="agenda-row"><span class="agenda-time">00:00</span><input type="text" class="agenda-input" id="snap-00:00" placeholder="..." value="${val00}" autocomplete="off"><button class="idea-bulb-btn" onclick="openIdeaSelector('snap-00:00')">💡</button></div>`;
+    
+    list.innerHTML = html;
+}
+
+function renderSnapshotPhase2() {
+    switchPhaseView(2);
+    
+    // Foco View
+    const fView = document.getElementById('snapshotFocusView');
+    fView.innerHTML = '<div style="text-align: center; font-weight: 800; color: #facc15; margin-bottom: 10px; font-size: 0.9rem;">⭐ OBJETIVOS CRÍTICOS (SELLADOS)</div>';
+    currentSnapshotData.focus.forEach((f, i) => {
+        if (!f) return;
+        const div = document.createElement('div');
+        div.className = 'snapshot-task focus-task';
+        div.style.marginBottom = '8px';
+        div.innerHTML = `<span style="margin-right:10px;">★</span><span class="task-text">${f}</span>`;
+        fView.appendChild(div);
+    });
+    
+    // Timeline View
+    const list = document.getElementById('snapshotTimelineReadOnly');
+    list.innerHTML = '';
+    let html = '';
+    Object.keys(currentSnapshotData.schedule).sort().forEach(t => {
+        const item = currentSnapshotData.schedule[t];
+        html += `
+            <div class="agenda-row" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 0;">
+                <span style="width: 60px; font-weight: 800; color: #64748b; font-size: 0.85rem; text-align: center;">${t}</span>
+                <span style="flex: 1; color: #f8fafc; font-size: 0.95rem;">${item.text}</span>
+            </div>`;
+    });
+    list.innerHTML = html || '<div style="text-align:center; padding:20px; color:#64748b;">No hay actividades programadas.</div>';
+}
+
+function renderSnapshotPhase3() {
+    switchPhaseView(3);
+    
+    // Foco Audit
+    const fView = document.getElementById('snapshotFocusView');
+    fView.innerHTML = '<div style="text-align: center; font-weight: 800; color: #facc15; margin-bottom: 10px; font-size: 0.9rem;">⭐ AUDITORÍA DE OBJETIVOS</div>';
+    currentSnapshotData.focus.forEach((f, i) => {
+        if (!f) return;
+        const div = document.createElement('div');
+        div.className = `snapshot-task focus-task ${currentSnapshotData.focusDone[i] ? 'done' : ''}`;
+        div.style.marginBottom = '8px';
+        div.style.cursor = 'pointer';
+        div.onclick = () => toggleDoneSnapshot('focus', i);
+        div.innerHTML = `
+            <input type="checkbox" class="audit-checkbox" ${currentSnapshotData.focusDone[i] ? 'checked' : ''} style="margin-right:10px;">
+            <span class="task-text">${f}</span>`;
+        fView.appendChild(div);
+    });
+    
+    // Timeline Audit
+    const list = document.getElementById('snapshotTimelineReadOnly');
+    list.innerHTML = '';
+    let html = '';
+    Object.keys(currentSnapshotData.schedule).sort().forEach(t => {
+        const item = currentSnapshotData.schedule[t];
+        const isDone = item.isDone;
+        html += `
+            <div class="snapshot-task ${isDone ? 'done' : ''}" style="margin-bottom: 5px; cursor: pointer;" onclick="toggleDoneSnapshot('schedule', '${t}')">
+                <span style="width: 50px; font-weight: 800; color: #64748b; font-size: 0.75rem;">${t}</span>
+                <input type="checkbox" class="audit-checkbox" ${isDone ? 'checked' : ''} style="margin-right:10px;">
+                <span class="task-text">${item.text}</span>
+            </div>`;
+    });
+    list.innerHTML = html;
+}
+
+function switchPhaseView(phase) {
+    const p1 = document.getElementById('snapshotPhase1');
+    const pView = document.getElementById('snapshotPhaseView');
+    const auditActions = document.getElementById('snapshotAuditActions');
+    const title = document.getElementById('snapshotPhaseLabel');
+    
+    if (p1) { p1.classList.add('hidden-phase'); p1.classList.remove('active-phase'); }
+    if (pView) { pView.classList.add('hidden-phase'); pView.classList.remove('active-phase'); }
+    if (auditActions) auditActions.classList.add('hidden-phase');
+    
+    if (phase === 1) {
+        if (p1) { p1.classList.remove('hidden-phase'); p1.classList.add('active-phase'); }
+        if (title) title.innerText = "MODO EDICIÓN";
+    } else if (phase === 2) {
+        if (pView) { pView.classList.remove('hidden-phase'); pView.classList.add('active-phase'); }
+        if (title) title.innerText = "MODO LECTURA (SNAPSHOT)";
+    } else if (phase === 3) {
+        if (pView) { pView.classList.remove('hidden-phase'); pView.classList.add('active-phase'); }
+        if (auditActions) auditActions.classList.remove('hidden-phase');
+        if (title) title.innerText = "MODO AUDITORÍA (COMPROMISO DE AYER)";
     }
 }
 

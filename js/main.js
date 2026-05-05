@@ -5,7 +5,7 @@ import { startWorkoutSession, exitWorkout, loadEx, toggleWorkoutPlay, workoutTic
 import { renderBreatheMenu, initBreatheEngine, toggleBreathe, stopBreathe, breatheTick, nextBreathePha, applyBreatheVis, updBreatheUI, finBreathe } from './modules/mindfulness.js';
 import { checkAndSaveRecordCloud, showGameResult, startMath, genMath, submitMath, startReflex, spawnTarget, clickTarget, startSimon, nextSimon, playSimon, simonClick, startStroop, nextStroop, strClick, startNBack, clickNBack, startSyllogism, submitSyllogism, startSpatial, submitSpatial, openRanking, loadRanking, stopAllGameTimers } from './modules/agilidad.js';
 import { initWizardPlaton } from './modules/metafisica.js';
-import { switchOrgTab, addIdea, guardarPlan, limpiarDia, openOrganizador, openIdeaSelector, closeIdeaSelector, selectIdea, loadSpecificDay } from './modules/organizador.js';
+import { switchOrgTab, addIdea, openOrganizador, openIdeaSelector, closeIdeaSelector, selectIdea, loadSpecificDay, sellarPlan, toggleDoneSnapshot, evaluarConstancia } from './modules/organizador.js';
 import { prevMonth, nextMonth } from './modules/agenda.js';
 import { openHabitosModal, closeHabitosModal, updateHabit, incrementGamify, loadTodayStats } from './modules/habitos.js';
 
@@ -182,8 +182,9 @@ window.initWizardPlaton = initWizardPlaton;
 // =========================================
 window.switchOrgTab = switchOrgTab;
 window.addIdea = addIdea;
-window.guardarPlan = guardarPlan;
-window.limpiarDia = limpiarDia;
+window.sellarPlan = sellarPlan;
+window.toggleDoneSnapshot = toggleDoneSnapshot;
+window.evaluarConstancia = evaluarConstancia;
 window.openIdeaSelector = openIdeaSelector;
 window.closeIdeaSelector = closeIdeaSelector;
 window.selectIdea = selectIdea;

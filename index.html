@@ -402,32 +402,58 @@
         </div>
 
         <div id="orgAgendaView" class="org-view view-hidden">
-            <div class="focus-triangle glass-card">
-                <div style="text-align: center; font-weight: 800; color: #cbd5e1; margin-bottom: 10px;">TRIÁNGULO DE FOCO</div>
-                <div class="focus-input-wrapper">
-                    <input type="text" class="focus-input focus-1" id="focus1" placeholder="1. Principal Objetivo" autocomplete="off">
-                    <button class="idea-bulb-btn" onclick="openIdeaSelector('focus1')" title="Añadir idea del Embudo">💡</button>
+            <div class="snapshot-header glass-card" style="margin-bottom: 10px;">
+                <div id="snapshotTitleLabel" style="text-align: center; font-weight: 900; color: #10b981; font-size: 1.3rem;">PROTOCOLOS DEL DÍA</div>
+                <div id="snapshotPhaseLabel" style="text-align: center; color: #cbd5e1; font-size: 0.8rem; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px;">MODO EDICIÓN</div>
+            </div>
+
+            <!-- FASE 1: Edición -->
+            <div id="snapshotPhase1" class="snapshot-phase active-phase" style="gap: 15px;">
+                <!-- Triángulo de Foco -->
+                <div class="focus-triangle glass-card" style="padding: 15px; background: rgba(15, 23, 42, 0.4);">
+                    <div style="text-align: center; font-weight: 800; color: #facc15; margin-bottom: 15px; font-size: 0.9rem;">⭐ OBJETIVOS CRÍTICOS (FOCO)</div>
+                    <div class="focus-input-wrapper" style="margin-bottom: 8px;">
+                        <input type="text" class="focus-input focus-1" id="snapFocus1" placeholder="1. Objetivo Principal" autocomplete="off" style="border-left: 4px solid var(--c-red);">
+                        <button class="idea-bulb-btn" onclick="openIdeaSelector('snapFocus1')" title="Añadir idea">💡</button>
+                    </div>
+                    <div class="focus-input-wrapper" style="margin-bottom: 8px;">
+                        <input type="text" class="focus-input focus-2" id="snapFocus2" placeholder="2. Objetivo Secundario" autocomplete="off" style="border-left: 4px solid var(--c-yellow);">
+                        <button class="idea-bulb-btn" onclick="openIdeaSelector('snapFocus2')" title="Añadir idea">💡</button>
+                    </div>
+                    <div class="focus-input-wrapper">
+                        <input type="text" class="focus-input focus-3" id="snapFocus3" placeholder="3. Tarea Menor" autocomplete="off" style="border-left: 4px solid var(--c-green);">
+                        <button class="idea-bulb-btn" onclick="openIdeaSelector('snapFocus3')" title="Añadir idea">💡</button>
+                    </div>
                 </div>
-                <div class="focus-input-wrapper">
-                    <input type="text" class="focus-input focus-2" id="focus2" placeholder="2. Objetivo Secundario" autocomplete="off">
-                    <button class="idea-bulb-btn" onclick="openIdeaSelector('focus2')" title="Añadir idea del Embudo">💡</button>
+
+                <!-- Timeline / Horario -->
+                <div class="snapshot-list-container glass-card" style="flex: 1; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                    <div style="font-size: 0.85rem; color: #10b981; padding: 15px 15px 5px; text-align: center; font-weight: 700;">📅 CRONOGRAMA DIARIO</div>
+                    <div id="snapshotTimelineEdit" class="agenda-list" style="flex: 1; overflow-y: auto; padding: 0 10px 15px;">
+                        <!-- JS generará los slots de 6:00 a 00:00 -->
+                    </div>
                 </div>
-                <div class="focus-input-wrapper">
-                    <input type="text" class="focus-input focus-3" id="focus3" placeholder="3. Tarea Menor" autocomplete="off">
-                    <button class="idea-bulb-btn" onclick="openIdeaSelector('focus3')" title="Añadir idea del Embudo">💡</button>
+
+                <div class="agenda-actions">
+                    <button class="btn btn-main btn-fijar-plan" id="btnSellarPlan" style="width: 100%; margin: 0; padding: 15px; font-size: 1.1rem; height: auto;" onclick="sellarPlan()">🔐 SELLAR PROTOCOLO Y BLOQUEAR</button>
                 </div>
             </div>
-            
-            <div class="agenda-container glass-card">
-                <div id="planDateLabel" style="text-align: center; font-weight: 800; color: #10b981; margin-bottom: 15px; font-size: 1.1rem;">Plan de Hoy</div>
-                <div class="agenda-list" id="agendaList">
-                    <!-- Javascript will generate hours from 06:00 to 00:00 -->
+
+            <!-- FASE 2/3: Lectura / Auditoría -->
+            <div id="snapshotPhaseView" class="snapshot-phase hidden-phase" style="gap: 15px;">
+                <div id="snapshotFocusView" class="focus-triangle glass-card" style="padding: 15px; background: rgba(15, 23, 42, 0.4);">
+                    <!-- Se inyectarán los objetivos de foco aquí -->
                 </div>
-            </div>
-            
-            <div class="agenda-actions">
-                <button class="btn btn-sec" style="flex: 1;" onclick="limpiarDia()">LIMPIAR DÍA</button>
-                <button class="btn btn-main btn-fijar-plan" id="btnGuardarPlan" style="flex: 2; margin: 0;" onclick="guardarPlan(false, this)">FIJAR PLAN DEL DÍA</button>
+
+                <div class="snapshot-list-container glass-card" style="flex: 1; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                    <div id="snapshotTimelineReadOnly" class="agenda-list" style="flex: 1; overflow-y: auto; padding: 10px;">
+                        <!-- Horario inmutable o auditable -->
+                    </div>
+                </div>
+
+                <div id="snapshotAuditActions" class="agenda-actions hidden-phase">
+                    <button class="btn btn-main" style="background: linear-gradient(135deg, #facc15 0%, #eab308 100%); width: 100%; margin: 0; padding: 15px; font-size: 1.1rem; height: auto; color: #000; font-weight: 900;" onclick="evaluarConstancia()">⚡ EVALUAR Y EXTRAER XP</button>
+                </div>
             </div>
         </div>
 

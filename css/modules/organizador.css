@@ -111,36 +111,30 @@
 
 .ideas-grid {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 20px;
     flex: 1;
-    min-height: 300px;
-}
-
-@media (max-width: 768px) {
-    .ideas-grid {
-        flex-direction: column;
-        overflow-y: auto;
-    }
 }
 
 .ideas-col {
-    flex: 1;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
-    padding: 10px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    max-height: 350px; /* Limitar altura para no perder el contexto */
 }
 
 .col-header {
-    text-align: center;
-    font-weight: 800;
-    font-size: 0.8rem;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--glass-border);
+    text-align: left; /* Alineado a la izquierda para el modo fila */
+    font-weight: 900;
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     margin-bottom: 5px;
+    letter-spacing: 1px;
 }
 
 .ideas-list {
@@ -201,128 +195,113 @@
 .idea-card.idea-green { border-left-color: var(--c-green); }
 
 /* Planificador Diario */
-.focus-triangle {
+/* Planificador Diario - Snapshot System */
+.snapshot-phase {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    animation: fadeIn 0.3s ease;
+}
+
+.hidden-phase {
+    display: none !important;
+}
+
+.snapshot-list-container {
+    padding: 15px;
+}
+
+.snapshot-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.6);
 }
 
-.focus-input {
-    flex: 1;
-    padding: 15px;
-    border-radius: 8px;
+.snapshot-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(255, 255, 255, 0.03);
-    color: #fff;
-    text-align: center;
-    font-weight: 600;
-    font-size: 1.05rem;
+    padding: 12px 15px;
+    border-radius: 8px;
     transition: all 0.3s ease;
-    font-family: 'Inter', 'Roboto', sans-serif;
 }
 
-.focus-input:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.1);
+.snapshot-task:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
-.focus-input:focus, .agenda-input:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02), 0 0 15px rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.4);
+.snapshot-task.focus-task {
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.5);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.2);
 }
 
-.idea-bulb-btn {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0 10px;
+.snapshot-task.focus-task .task-text {
+    color: #facc15;
+    font-weight: 700;
+}
+
+.snapshot-task.done {
     opacity: 0.6;
-    transition: transform 0.2s, opacity 0.2s, filter 0.2s;
-    filter: drop-shadow(0 0 2px rgba(250, 204, 21, 0.2));
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
-.idea-bulb-btn:hover {
-    opacity: 1;
-    transform: scale(1.15);
-    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.8));
+.snapshot-task.done .task-text {
+    text-decoration: line-through;
+    color: #10b981;
+    text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
 }
 
-.focus-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.focus-1 { border-left: 5px solid var(--c-red); }
-.focus-2 { border-left: 5px solid var(--c-yellow); }
-.focus-3 { border-left: 5px solid var(--c-green); }
-
-.w-100 { width: 100%; }
-.w-90 { width: 90%; }
-.w-80 { width: 80%; }
-
-.agenda-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: rgba(15, 23, 42, 0.6);
-}
-
-.agenda-list {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.agenda-row {
-    display: flex;
-    align-items: stretch;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background 0.2s;
-    position: relative;
-}
-
-.agenda-row:hover {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.agenda-row.current-hour {
-    background: rgba(16, 185, 129, 0.05);
-}
-
-.agenda-row.current-hour::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 3px;
-    background: var(--c-green);
-    box-shadow: 0 0 10px var(--c-green);
-}
-
-.agenda-time {
-    width: 60px;
-    padding: 15px 10px;
-    font-weight: 800;
-    color: #64748b;
-    background: rgba(0, 0, 0, 0.2);
+.task-checkbox-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
 }
 
-.agenda-row.current-hour .agenda-time {
-    color: var(--c-green);
+.task-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #facc15;
+}
+
+.audit-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #10b981;
+}
+
+.task-text {
+    flex: 1;
+    color: #f8fafc;
+    font-size: 1rem;
+    word-break: break-word;
+    transition: all 0.3s ease;
+}
+
+.delete-task-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: color 0.2s;
+}
+
+.delete-task-btn:hover {
+    color: #ef4444;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .agenda-input {
@@ -334,6 +313,11 @@
     font-size: 0.95rem;
     font-family: 'Inter', 'Roboto', sans-serif;
     transition: all 0.3s ease;
+}
+
+.agenda-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
 }
 
 .agenda-actions {
