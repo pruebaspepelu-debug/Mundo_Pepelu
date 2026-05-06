@@ -4,6 +4,7 @@ import { initCalendar } from './agenda.js';
 import { incrementGamify } from './habitos.js';
 
 import { startMusicModule } from '../core/audio-manager.js';
+import { startTracking } from '../core/time-tracker.js';
 
 // =========================================
 // UI TABS
@@ -11,6 +12,7 @@ import { startMusicModule } from '../core/audio-manager.js';
 export function openOrganizador() {
     showScreen('screenOrganizador');
     startMusicModule('org');
+    startTracking('organizador');
     switchOrgTab('ideas');
 }
 export function switchOrgTab(tabName, dateStr = null) {
@@ -47,6 +49,7 @@ export function switchOrgTab(tabName, dateStr = null) {
 export function loadSpecificDay(dateStr) {
     showScreen('screenOrganizador');
     startMusicModule('org');
+    startTracking('organizador');
     switchOrgTab('planificador', dateStr);
 }
 

@@ -74,9 +74,13 @@
             <!-- 3. CUERPO CENTRAL (TRADING LAYOUT) -->
             <div class="main-body-grid">
                 <!-- COLUMNA IZQUIERDA: EL GUARDIÁN -->
-                <div class="left-column" id="avatar-col">
+                <div class="left-column" id="avatar-col" style="position: relative;">
+                    <div id="aiGuardianMessage" class="hidden" style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.9); border: 1px solid var(--primary); padding: 10px 15px; border-radius: 12px; color: #fff; font-size: 0.9rem; z-index: 10; width: 90%; text-align: center; box-shadow: 0 0 15px rgba(56,189,248,0.5); backdrop-filter: blur(5px);">
+                        <!-- AI Message Injected Here -->
+                    </div>
                     <div class="avatar-card-5d glass-card">
                         <model-viewer 
+                            id="dragonAvatar"
                             src="dragon_fase1.glb" 
                             camera-controls 
                             disable-zoom 
@@ -86,7 +90,8 @@
                             min-camera-orbit="auto"
                             shadow-intensity="1" 
                             exposure="1.2" 
-                            class="avatar-5d">
+                            class="avatar-5d"
+                            onclick="window.openDragonChat()">
                         </model-viewer>
                         <div class="mascot-xp-mini">
                             XP: <span id="xpPercentDisplay">0</span>%
@@ -109,36 +114,49 @@
             <!-- 4. MÉTRICAS CORE DE RESILIENCIA -->
             <footer class="core-parameters glass-card">
                 <h3 class="panel-title">MÉTRICAS CORE DE RESILIENCIA</h3>
-                <div class="gauges-grid">
-                    <div class="gauge-box">
-                        <div class="arc-gauge-container">
-                            <svg viewBox="0 0 100 100" class="arc-gauge">
-                                <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
-                                <circle class="gauge-fill mente" cx="50" cy="50" r="45" style="stroke-dasharray: 212; stroke-dashoffset: 60;"></circle>
-                            </svg>
-                            <span class="gauge-value" id="valFocus">70%</span>
+                <div class="mana-bars-grid">
+                    <!-- FÍSICO -->
+                    <div class="mana-bar-wrapper">
+                        <div class="mana-bar-header">
+                            <span class="mana-label"><i class="fas fa-dumbbell"></i> POTENCIA FÍSICA</span>
+                            <span class="mana-value" id="valFisicoText">0/30 XP</span>
                         </div>
-                        <span class="gauge-name">ENFOQUE SEMANAL</span>
+                        <div class="mana-bar-track">
+                            <div class="mana-bar-fill fisico" id="barFisico" style="width: 0%"></div>
+                        </div>
                     </div>
-                    <div class="gauge-box">
-                        <div class="arc-gauge-container">
-                            <svg viewBox="0 0 100 100" class="arc-gauge">
-                                <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
-                                <circle class="gauge-fill fisico" cx="50" cy="50" r="45" style="stroke-dasharray: 212; stroke-dashoffset: 100;"></circle>
-                            </svg>
-                            <span class="gauge-value" id="valPower">50%</span>
+                    
+                    <!-- MENTAL -->
+                    <div class="mana-bar-wrapper">
+                        <div class="mana-bar-header">
+                            <span class="mana-label"><i class="fas fa-brain"></i> ENFOQUE COGNITIVO</span>
+                            <span class="mana-value" id="valMentalText">0/20 XP</span>
                         </div>
-                        <span class="gauge-name">POTENCIA FÍSICA</span>
+                        <div class="mana-bar-track">
+                            <div class="mana-bar-fill mente" id="barMental" style="width: 0%"></div>
+                        </div>
                     </div>
-                    <div class="gauge-box">
-                        <div class="arc-gauge-container">
-                            <svg viewBox="0 0 100 100" class="arc-gauge">
-                                <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
-                                <circle class="gauge-fill mindfulness" cx="50" cy="50" r="45" style="stroke-dasharray: 212; stroke-dashoffset: 40;"></circle>
-                            </svg>
-                            <span class="gauge-value" id="valZen">85%</span>
+
+                    <!-- ORGANIZADOR -->
+                    <div class="mana-bar-wrapper">
+                        <div class="mana-bar-header">
+                            <span class="mana-label"><i class="fas fa-calendar-check"></i> DISCIPLINA TÁCTICA</span>
+                            <span class="mana-value" id="valOrgText">0/30 XP</span>
                         </div>
-                        <span class="gauge-name">ESTADO ZEN</span>
+                        <div class="mana-bar-track">
+                            <div class="mana-bar-fill organizador" id="barOrg" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- MINDFULNESS -->
+                    <div class="mana-bar-wrapper">
+                        <div class="mana-bar-header">
+                            <span class="mana-label"><i class="fas fa-wind"></i> ESTADO ZEN</span>
+                            <span class="mana-value" id="valMindText">0/20 XP</span>
+                        </div>
+                        <div class="mana-bar-track">
+                            <div class="mana-bar-fill mindfulness" id="barMind" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </footer>
@@ -151,18 +169,30 @@
             <span class="mode-badge" style="color: var(--primary); border-color: var(--primary);">MODO FÍSICO</span>
             <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicWorkoutGlobal" onclick="toggleMusic('workout')">🎵</button></div>
         </div>
-        <div class="selector-container" style="margin-top:0;">
-            <div class="glass-card selector-card" onclick="openCustomRoutineMenu()" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(56, 189, 248, 0.1)); border-color: rgba(56, 189, 248, 0.3);">
-                <span class="selector-icon">⚙️</span>
-                <div class="text-left"><div class="main-effect-title" style="color: #38bdf8;">MI RUTINA</div><div class="selector-desc">Crea tu entrenamiento a medida.</div></div>
+        <div class="hub-grid-container">
+            <div class="hub-card fisico-theme" onclick="openCustomRoutineMenu()">
+                <div class="hub-card-icon">⚙️</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Mi Rutina</h4>
+                    <p class="hub-card-desc">Crea tu entrenamiento a medida.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card" onclick="openEstiramientosHub()">
-                <span class="selector-icon">🧘</span>
-                <div class="text-left"><div class="main-effect-title">ESTIRAMIENTOS</div><div class="selector-desc">Rutinas para Casa y Oficina.</div></div>
+            <div class="hub-card fisico-theme" onclick="openEstiramientosHub()">
+                <div class="hub-card-icon">🧘</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Estiramientos</h4>
+                    <p class="hub-card-desc">Rutinas para Casa y Oficina.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-rehab" onclick="startWorkoutSession('rehab')">
-                <span class="selector-icon">⚕️</span>
-                <div class="text-left"><div class="main-effect-title" style="color: var(--rehab);">REHABILITACIÓN</div><div class="selector-desc">Rulo, activación y series.</div></div>
+            <div class="hub-card rehab-theme" onclick="startWorkoutSession('rehab')">
+                <div class="hub-card-icon">⚕️</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Rehabilitación</h4>
+                    <p class="hub-card-desc">Rulo, activación y series.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
         </div>
     </div>
@@ -220,14 +250,22 @@
             <span class="mode-badge" style="color: var(--primary); border-color: var(--primary);">ESTIRAMIENTOS</span>
             <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicWorkoutEst" onclick="toggleMusic('workout')">🎵</button></div>
         </div>
-        <div class="selector-container" style="margin-top:0;">
-            <div class="glass-card selector-card" onclick="startWorkoutSession('office')">
-                <span class="selector-icon">🏢</span>
-                <div class="text-left"><div class="main-effect-title">OFICINA</div><div class="selector-desc">Adaptados de pie o sentado.</div></div>
+        <div class="hub-grid-container">
+            <div class="hub-card fisico-theme" onclick="startWorkoutSession('office')">
+                <div class="hub-card-icon">🏢</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Oficina</h4>
+                    <p class="hub-card-desc">Adaptados de pie o sentado.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card" onclick="startWorkoutSession('home')">
-                <span class="selector-icon">🏠</span>
-                <div class="text-left"><div class="main-effect-title">CASA</div><div class="selector-desc">Rutina completa y profunda.</div></div>
+            <div class="hub-card fisico-theme" onclick="startWorkoutSession('home')">
+                <div class="hub-card-icon">🏠</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Casa</h4>
+                    <p class="hub-card-desc">Rutina completa y profunda.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
         </div>
     </div>
@@ -247,38 +285,79 @@
             <span class="mode-badge" style="background: rgba(251, 146, 60, 0.2); color: var(--brain); border-color: var(--brain);">AGILIDAD MENTAL</span>
             <div class="audio-controls"><button class="btn-circle" id="btnToggleMusicGamesGlobal" onclick="toggleMusic('games')">🎵</button></div>
         </div>
-        <div class="selector-container" style="margin-top:0;">
-            <div class="glass-card selector-card card-games" onclick="openRanking()" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(250, 204, 21, 0.1));">
-                <span class="selector-icon" style="font-size:2rem;">🏆</span>
-                <div class="text-left"><div class="main-effect-title" style="color:#facc15;">Ranking Global</div><div class="selector-desc">Compite con el mundo.</div></div>
+        <div class="hub-grid-container">
+            <!-- RANKING (Destacado) -->
+            <div class="hub-card ranking-special" onclick="openRanking()">
+                <div class="hub-card-icon">🏆</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Ranking Global</h4>
+                    <p class="hub-card-desc">Mide tu agilidad con otros maestros.</p>
+                </div>
+                <div class="game-card-badge">TOP 10</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startMath()">
-                <span class="selector-icon" style="font-size:2rem;">🧮</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Cálculo Rápido</div></div>
+
+            <!-- JUEGOS -->
+            <div class="hub-card brain-theme" onclick="startMath()">
+                <div class="hub-card-icon">🧮</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Cálculo Rápido</h4>
+                    <p class="hub-card-desc">Operaciones relámpago bajo presión.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startReflex()">
-                <span class="selector-icon" style="font-size:2rem;">🎯</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Caza-Dianas</div></div>
+
+            <div class="hub-card brain-theme" onclick="startReflex()">
+                <div class="hub-card-icon">🎯</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Caza-Dianas</h4>
+                    <p class="hub-card-desc">Reflejos y precisión de francotirador.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startSimon()">
-                <span class="selector-icon" style="font-size:2rem;">🧩</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Memoria Simón</div></div>
+
+            <div class="hub-card brain-theme" onclick="startSimon()">
+                <div class="hub-card-icon">🧩</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Memoria Simón</h4>
+                    <p class="hub-card-desc">Patrones visuales de alta complejidad.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startStroop()">
-                <span class="selector-icon" style="font-size:2rem;">🎨</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Efecto Stroop</div></div>
+
+            <div class="hub-card brain-theme" onclick="startStroop()">
+                <div class="hub-card-icon">🎨</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Efecto Stroop</h4>
+                    <p class="hub-card-desc">Inhibición cognitiva y velocidad.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startNBack()">
-                <span class="selector-icon" style="font-size:2rem;">🧠</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">N-Back (Memoria)</div></div>
+
+            <div class="hub-card brain-theme" onclick="startNBack()">
+                <div class="hub-card-icon">🧠</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">N-Back Dual</h4>
+                    <p class="hub-card-desc">Entrenamiento de memoria de trabajo.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startSyllogism()">
-                <span class="selector-icon" style="font-size:2rem;">⚖️</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Silogismos Lógicos</div></div>
+
+            <div class="hub-card brain-theme" onclick="startSyllogism()">
+                <div class="hub-card-icon">⚖️</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Silogismos</h4>
+                    <p class="hub-card-desc">Lógica pura y deducción rápida.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
-            <div class="glass-card selector-card card-games" onclick="startSpatial()">
-                <span class="selector-icon" style="font-size:2rem;">🧊</span>
-                <div class="text-left"><div class="main-effect-title" style="font-size:1.1rem;">Rotación Espacial</div></div>
+
+            <div class="hub-card brain-theme" onclick="startSpatial()">
+                <div class="hub-card-icon">🧊</div>
+                <div class="hub-card-info">
+                    <h4 class="hub-card-title">Rotación 3D</h4>
+                    <p class="hub-card-desc">Visualización espacial avanzada.</p>
+                </div>
+                <div class="hub-card-play">▶</div>
             </div>
         </div>
     </div>
@@ -501,5 +580,27 @@
             </div>
         </div>
     </div>
+    <!-- MODAL CHAT DRAGÓN ENTRENABLE -->
+    <div class="modal-overlay hidden" id="dragonChatModal">
+        <div class="glass-card modal-content" style="max-width: 500px; width: 90%; padding: 25px; display: flex; flex-direction: column; height: 70vh;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+                <h2 style="margin:0; font-size: 1.4rem; font-weight: 900; color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);">🐲 ENLACE NEURONAL</h2>
+                <button class="btn-circle" onclick="closeDragonChat()" style="width: 32px; height: 32px; font-size: 0.9rem;">✕</button>
+            </div>
+            
+            <div id="dragonChatHistory" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 10px;">
+                <!-- Mensajes inyectados dinámicamente -->
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <input type="text" id="dragonChatInput" placeholder="Enseña a tu Dragón..." style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; padding: 10px 15px; outline: none; font-family: 'Rajdhani', sans-serif;">
+                <button class="btn btn-main" style="margin:0; padding: 10px 20px;" onclick="sendDragonMessage()">ENVIAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EL CEREBRO TÁCTICO FLOTANTE (Ruta Híbrida) -->
+    <div id="tacticalBrain" class="hidden" onclick="window.openDragonChat()">🧠</div>
+
 </body>
 </html>

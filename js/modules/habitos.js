@@ -1,4 +1,5 @@
 import { db, auth } from '../core/firebase-init.js';
+import { showXPNotification } from '../core/notifier.js';
 
 let dailyGamification = {}; // Cache para los puntos del mes
 
@@ -54,6 +55,7 @@ export async function incrementGamify(key, incrementValue = 1) {
         }, { merge: true });
         
         console.log(`Gamificación incrementada: ${key} += ${incrementValue}`);
+        showXPNotification(incrementValue, `Progreso en ${key.split('_')[0].toUpperCase()}`);
         loadTodayStats(); // Actualizar UI del Avatar
     } catch (e) {
         console.error("Error incrementando gamificación:", e);
@@ -75,28 +77,31 @@ export async function loadTodayStats() {
         
         const xpStats = calculateDailyXP(data);
         updateAvatarUI(xpStats);
-        updateGauges(xpStats);
+        updateManaBars(xpStats);
         initTradingChart();
     } catch (e) {
         console.error("Error cargando XP diario:", e);
     }
 }
 
-export function updateGauges(xp) {
-    const setGauge = (id, valId, percent) => {
-        const fill = document.querySelector(`.gauge-fill.${id}`);
-        const text = document.getElementById(valId);
+export function updateManaBars(xp) {
+    const setBar = (id, current, max) => {
+        const fill = document.getElementById(`bar${id}`);
+        const text = document.getElementById(`val${id}Text`);
+        const percent = (current / max) * 100;
+        
         if (fill) {
-            const offset = 283 - (Math.min(percent, 100) / 100) * 283;
-            fill.style.strokeDashoffset = offset;
+            fill.style.width = `${Math.min(percent, 100)}%`;
+            fill.classList.add('updating');
+            setTimeout(() => fill.classList.remove('updating'), 600);
         }
-        if (text) text.innerText = `${Math.floor(percent)}%`;
+        if (text) text.innerText = `${Math.floor(current)}/${max} XP`;
     };
 
-    // Mapeo de métricas según requerimiento
-    setGauge('mente', 'valFocus', (xp.mente + xp.organizador) / 50 * 100);
-    setGauge('fisico', 'valPower', (xp.fisico / 30 * 100));
-    setGauge('mindfulness', 'valZen', (xp.mindfulness / 20 * 100));
+    setBar('Fisico', xp.fisico, 30);
+    setBar('Mental', xp.mente, 20);
+    setBar('Org', xp.organizador, 30);
+    setBar('Mind', xp.mindfulness, 20);
 }
 
 export async function initTradingChart() {
@@ -173,25 +178,33 @@ export function calculateDailyXP(data) {
     let organizador = 0;
     let mindfulness = 0;
 
-    // 1. MÓDULO FÍSICO (Máx 30 pts)
-    if (data.fisico_sesion_fuerte) fisico += 20;
+    // 1. FÍSICO (Máx 30 XP)
+    // 2 sesiones de Estiramientos (+5 XP c/u, máx 10)
     const estiramientos = data.fisico_estiramientos || 0;
     fisico += Math.min(estiramientos, 2) * 5;
+    // Sesión Entreno/Rehabilitación (+20 XP)
+    if (data.fisico_sesion_fuerte) fisico += 20;
     fisico = Math.min(fisico, 30);
 
-    // 2. JUEGOS MENTALES (Máx 20 pts)
-    if (data.juegos_minutos >= 10) mente += 15;
+    // 2. MENTAL JUEGOS (Máx 20 XP)
+    // >10 min jugando (+15 XP)
+    if ((data.juegos_minutos || 0) >= 10) mente += 15;
+    // Nuevo Récord (+5 XP)
     if (data.juegos_nuevo_record) mente += 5;
     mente = Math.min(mente, 20);
 
-    // 3. MÓDULO ORGANIZADOR (Máx 30 pts)
-    if (data.organizador_cumplimiento >= 75) organizador += 15;
+    // 3. ORGANIZADOR (Máx 30 XP)
+    // Auditoría >= 75% (+15 XP)
+    if ((data.organizador_cumplimiento || 0) >= 75) organizador += 15;
+    // 3 Tareas Foco (+10 XP)
     if (data.organizador_foco_completado) organizador += 10;
-    if (data.organizador_minutos >= 10) organizador += 5;
+    // >10 min organizando (+5 XP)
+    if ((data.organizador_minutos || 0) >= 10) organizador += 5;
     organizador = Math.min(organizador, 30);
 
-    // 4. MÓDULO MINDFULNESS (Máx 20 pts)
-    const mindSessions = data.mindfulness_sesiones_largas || 0;
+    // 4. MINDFULNESS (Máx 20 XP)
+    // >10 min actividad (+10 XP) y otra sesión >10 min (+10 XP, máx 2 total)
+    const mindSessions = data.mindfulness_sesiones_largas || 0; // Guardaremos aquí las sesiones >= 10min
     mindfulness += Math.min(mindSessions, 2) * 10;
     mindfulness = Math.min(mindfulness, 20);
 
@@ -209,6 +222,68 @@ export function updateAvatarUI(xpStats) {
     if (ptsDisplay) ptsDisplay.innerText = `${Math.floor(totalXP)} XP`;
     if (xpBar) xpBar.style.width = `${pct}%`;
     if (xpPercent) xpPercent.innerText = Math.floor(pct);
+
+    // Call Avatar Engine if loaded
+    if (window.updateDragonEvolution) {
+        window.updateDragonEvolution(totalXP);
+    }
+}
+
+/**
+ * Calcula la racha actual de días consecutivos con XP >= 75
+ * basados en los datos del último mes (simplificación para rendimiento).
+ */
+export async function calculateCurrentStreak() {
+    const habits = await loadMonthlyHabits();
+    const todayStr = new Date().toISOString().split('T')[0];
+    let streak = 0;
+    
+    // Contamos hacia atrás empezando por hoy
+    for (let i = 0; i < 31; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        const dayData = habits[dateStr];
+        if (!dayData) {
+            // Si es hoy y no hay datos, miramos ayer. Si es otro día, la racha se rompe.
+            if (i === 0) continue; 
+            break;
+        }
+        
+        const xp = calculateDailyXP(dayData).total;
+        if (xp >= 60) {
+            streak++;
+        } else {
+            // Si el XP es < 60 hoy, la racha se rompió
+            if (i === 0) continue; 
+            break;
+        }
+    }
+    return streak;
+}
+
+/**
+ * Suma todo el XP de la vida del usuario para calcular el Crecimiento Físico.
+ */
+export async function calculateLifetimeXP() {
+    if (!auth.currentUser) return 0;
+    
+    try {
+        const snapshot = await db.collection('gamificacion_diaria')
+            .where('uid', '==', auth.currentUser.uid)
+            .get();
+            
+        let totalXP = 0;
+        snapshot.forEach(doc => {
+            totalXP += calculateDailyXP(doc.data()).total;
+        });
+        
+        return totalXP;
+    } catch (e) {
+        console.error("Error calculando XP Total:", e);
+        return 0;
+    }
 }
 
 // ... rest of the file (heatmap etc) kept for compatibility ...

@@ -9,6 +9,11 @@ import { switchOrgTab, addIdea, openOrganizador, openIdeaSelector, closeIdeaSele
 import { prevMonth, nextMonth } from './modules/agenda.js';
 import { openHabitosModal, closeHabitosModal, updateHabit, incrementGamify, loadTodayStats } from './modules/habitos.js';
 
+// Inicializar Módulos Avanzados (Protocolos 3 y 4)
+import './modules/avatar-engine.js';
+import './modules/ai-predictor.js';
+import './modules/dragon-chat.js';
+
 // =========================================
 // FIREBASE
 // =========================================
@@ -24,6 +29,7 @@ window.showSubMenu = function(module, el) {
     if (!container) return;
 
     container.classList.remove('hidden');
+    container.style.display = 'flex'; // Asegurar que sea flex
     
     // Feedback visual en pestañas
     document.querySelectorAll('.hud-tab').forEach(tab => tab.classList.remove('active'));
@@ -33,25 +39,46 @@ window.showSubMenu = function(module, el) {
     switch(module) {
         case 'fisico':
             html = `
-                <div class="mission-card" onclick="openFisicoHub()"><span>🔥</span> FUERZA / REHAB</div>
-                <div class="mission-card" onclick="openEstiramientosHub()"><span>🧘</span> ESTIRAMIENTOS</div>
+                <div class="hub-card fisico-theme mission-mini" onclick="openFisicoHub()">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">🔥</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">FUERZA / REHAB</h4></div>
+                </div>
+                <div class="hub-card fisico-theme mission-mini" onclick="openEstiramientosHub()">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">🧘</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">ESTIRAMIENTOS</h4></div>
+                </div>
             `;
             break;
         case 'juegos':
             html = `
-                <div class="mission-card" onclick="openGamesHub()"><span>🎮</span> ENTRENAMIENTO</div>
-                <div class="mission-card" onclick="openRanking()"><span>🏆</span> RANKING</div>
+                <div class="hub-card brain-theme mission-mini" onclick="openGamesHub()">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">🎮</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">ENTRENAMIENTO</h4></div>
+                </div>
+                <div class="hub-card brain-theme mission-mini" onclick="openRanking()">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">🏆</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">RANKING</h4></div>
+                </div>
             `;
             break;
         case 'organizador':
             html = `
-                <div class="mission-card" onclick="openOrganizador()"><span>📅</span> AGENDA</div>
-                <div class="mission-card" onclick="openHabitosModal()"><span>🔥</span> CONSTANCIA</div>
+                <div class="hub-card mission-mini" onclick="openOrganizador()" style="border-color: rgba(255,255,255,0.2);">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">📅</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">AGENDA</h4></div>
+                </div>
+                <div class="hub-card mission-mini" onclick="openHabitosModal()" style="border-color: rgba(255,255,255,0.2);">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">🔥</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">CONSTANCIA</h4></div>
+                </div>
             `;
             break;
         case 'mindfulness':
             html = `
-                <div class="mission-card" onclick="openBreatheHub()"><span>🧘</span> SESIÓN ZEN</div>
+                <div class="hub-card zen-theme mission-mini" onclick="openBreatheHub()">
+                    <div class="hub-card-icon" style="font-size: 1.2rem;">🧘</div>
+                    <div class="hub-card-info"><h4 class="hub-card-title" style="font-size: 0.9rem;">SESIÓN ZEN</h4></div>
+                </div>
             `;
             break;
     }

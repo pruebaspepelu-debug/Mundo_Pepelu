@@ -65,12 +65,31 @@ export const BREATHE_DB = {
 };
 
 export function renderBreatheMenu() {
-    const container = document.getElementById('breatheListContainer'); container.innerHTML = '';
+    const container = document.getElementById('breatheListContainer'); 
+    container.className = 'hub-grid-container'; // Aseguramos que use la cuadrícula
+    container.innerHTML = '';
+    
     for (const [id, tech] of Object.entries(BREATHE_DB)) {
         let warningHtml = tech.warning ? `<div class="safety-warning">${tech.warning}</div>` : '';
-        let html = `<div class="glass-card selector-card card-breathe" style="flex-direction: column; align-items: flex-start; cursor: default;"><div class="text-left"><span class="icon-top">${tech.icon}</span><div class="main-effect-title">${tech.effect}</div><div class="tech-name">${tech.n}</div><div class="selector-desc">${tech.desc}</div>${warningHtml}</div><div class="tech-options">`;
-        tech.options.forEach(opt => { html += `<button class="btn-opt" onclick="initBreatheEngine('${id}', ${opt.v})">${opt.l}</button>`; });
-        html += `</div></div>`; container.innerHTML += html;
+        
+        let html = `
+            <div class="hub-card zen-theme" style="flex-direction: column; align-items: flex-start; cursor: default;">
+                <div class="hub-card-icon" style="align-self: center;">${tech.icon}</div>
+                <div class="hub-card-info" style="width: 100%;">
+                    <h4 class="hub-card-title" style="color: var(--breathe); text-align: center;">${tech.effect}</h4>
+                    <p class="hub-card-desc" style="text-align: center; margin-bottom: 5px;"><strong>${tech.n}</strong></p>
+                    <p class="hub-card-desc" style="font-size: 0.75rem; text-align: center;">${tech.desc}</p>
+                    ${warningHtml}
+                </div>
+                <div class="tech-options" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; width: 100%; justify-content: center;">
+        `;
+        
+        tech.options.forEach(opt => { 
+            html += `<button class="btn-opt" style="padding: 8px 12px; font-size: 0.8rem;" onclick="initBreatheEngine('${id}', ${opt.v})">${opt.l}</button>`; 
+        });
+        
+        html += `</div></div>`; 
+        container.innerHTML += html;
     }
 }
 

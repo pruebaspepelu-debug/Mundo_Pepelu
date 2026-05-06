@@ -1,4 +1,4 @@
-export let bgMusicWorkout = null, isMusicWorkoutOn = false;
+﻿export let bgMusicWorkout = null, isMusicWorkoutOn = false;
 export let bgMusicZen = null, isMusicZenOn = false;
 export let bgMusicGames = null, isMusicGamesOn = false;
 export let bgMusicOrg = null, isMusicOrgOn = false;
@@ -38,21 +38,15 @@ export function toggleMusic(type) {
             b?.classList.add('toggle-off'); 
         } else { 
             if(!bgMusicOrg) { 
-                console.log("Cargando audio desde: ./Online/audios_organizador/ondas_alfa.m4a");
                 bgMusicOrg = new Audio('./Online/audios_organizador/ondas_alfa.m4a'); 
                 bgMusicOrg.loop = true; 
                 bgMusicOrg.volume = 0.30; 
-                
-                bgMusicOrg.onerror = () => {
-                    console.error("Error al cargar el archivo de audio: ./Online/audios_organizador/ondas_alfa.m4a");
-                };
             } 
-            
             bgMusicOrg.play().then(() => {
                 isMusicOrgOn = true; 
                 b?.classList.remove('toggle-off'); 
             }).catch(e => {
-                console.error("Error al reproducir el audio. (Puede requerir interacción del usuario o la ruta es incorrecta): ", e);
+                console.error("Error al reproducir el audio: ", e);
             });
         }
     }
@@ -86,12 +80,10 @@ export const synth = window.speechSynthesis;
 function loadVoices() {
     if(!synth) return;
     let voices = synth.getVoices();
-    // Prioridad Premium: Voces Online, Naturales, Google o Helena (Microsoft) o Monica/Paulina (Apple)
     bestVoice = voices.find(v => (v.lang.includes('es') || v.lang.includes('MX')) && 
         (v.name.includes('Online') || v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Helena') || v.name.includes('Monica') || v.name.includes('Paulina'))) || 
         voices.find(v => v.lang.includes('es')) || 
         voices[0];
-    if(bestVoice) console.log("TTS: Voz optimizada seleccionada ->", bestVoice.name);
 }
 if(synth) {
     if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
@@ -108,7 +100,6 @@ export function playWorkoutAudio(filename, fbTitle, fbInstr) {
     let a = new Audio('./Online/voces/' + filename + '.mp3'); currentVoiceAudio = a;
     a.play().catch(e => { 
         if(!filename.includes('motiva') && synth){ 
-            console.log("Audio MP3 falló, usando TTS fallback para:", fbTitle);
             speakNative(fbInstr ? fbTitle + ". " + fbInstr : fbTitle);
         } 
     }); 
@@ -130,7 +121,6 @@ export function toggleWorkoutVoice() {
     } else {
         isVoiceWorkoutOn = true;
         b?.classList.remove('toggle-off');
-        // Pequeño truco para "desbloquear" el synth en móviles
         if(synth) {
             let u = new SpeechSynthesisUtterance("");
             synth.speak(u);
@@ -140,33 +130,115 @@ export function toggleWorkoutVoice() {
 
 export function initTTS() {
     if(!synth) return;
-    console.log("TTS: Ejecutando desbloqueo (initTTS)...");
     synth.cancel();
     let u = new SpeechSynthesisUtterance("Voz activada");
-    u.volume = 0; // Silencioso pero procesado
+    u.volume = 0;
     u.lang = 'es-ES';
     if(bestVoice) u.voice = bestVoice;
     synth.speak(u);
 }
 
-// Función centralizada para hablar
 function speakNative(text) {
     if(!synth) return;
-    synth.cancel(); // Limpiar cola
+    synth.cancel();
     let u = new SpeechSynthesisUtterance(text);
     u.lang = 'es-ES';
     if(bestVoice) u.voice = bestVoice;
-    u.rate = 0.9;   // Un poco más pausado para sonar menos "ametralladora"
-    u.pitch = 1.0;  // Tono neutro para evitar distorsión metálica
-    u.onerror = (e) => console.error("TTS Error:", e);
-    console.log("TTS: Locutando ->", text, "| Rate: 0.9, Pitch: 1.0");
+    u.rate = 0.9;
+    u.pitch = 1.0;
     synth.speak(u);
 }
 
 export function playWorkoutTTS(text) {
-    if(!isVoiceWorkoutOn) {
-        console.warn("TTS: Locución omitida (isVoiceWorkoutOn es false)");
-        return;
-    }
+    if(!isVoiceWorkoutOn) return;
     speakNative(text);
 }
+
+/* =========================================
+   VOZ DEL DRAGÓN
+   ========================================= */
+export function speakDragon(text) {
+    if(!synth) return;
+    synth.cancel();
+    let u = new SpeechSynthesisUtterance(text);
+    u.lang = 'es-ES';
+    if(bestVoice) u.voice = bestVoice;
+    u.rate = 0.8;
+    u.pitch = 0.6; // Voz grave
+    u.volume = 1.0;
+    synth.speak(u);
+}
+
+let auraOsc = null;
+let auraGain = null;
+
+export function toggleDragonAura(on) {
+    if(!audioCtx) return;
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+
+    if(on) {
+        if(!auraOsc) {
+            auraOsc = audioCtx.createOscillator();
+            auraGain = audioCtx.createGain();
+            auraOsc.type = 'sine';
+            auraOsc.frequency.setValueAtTime(40, audioCtx.currentTime);
+            auraGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            auraGain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 1);
+            auraOsc.connect(auraGain);
+            auraGain.connect(audioCtx.destination);
+            auraOsc.start();
+        }
+    } else {
+        if(auraGain) {
+            auraGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+            setTimeout(() => {
+                if(auraOsc) { auraOsc.stop(); auraOsc = null; auraGain = null; }
+            }, 1100);
+        }
+    }
+}
+
+/* =========================================
+   ELEVENLABS BRIDGE
+   ========================================= */
+const ELEVEN_LABS_API_KEY = "sk_7d99645c13f373bae0fdc19a1ebe8c1595fb91cc528e1fb9";
+const VOICE_ID = "pNInz6obpgDQGcFmaJgB"; // Voz de Adam
+
+export async function speakElevenLabs(text) {
+    if(!ELEVEN_LABS_API_KEY) {
+        speakDragon(text);
+        return;
+    }
+
+    try {
+        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + VOICE_ID, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'xi-api-key': ELEVEN_LABS_API_KEY
+            },
+            body: JSON.stringify({
+                text: text,
+                model_id: "eleven_multilingual_v2",
+                voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+            })
+        });
+
+        if (!response.ok) throw new Error("ElevenLabs API error");
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+    } catch (e) {
+        console.error("ElevenLabs Error:", e);
+        speakDragon(text);
+    }
+}
+
+// Desbloqueo Global de Audio (Interacción de Usuario)
+document.addEventListener('click', () => {
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => console.log("AudioContext DESBLOQUEADO"));
+    }
+}, { once: true });
