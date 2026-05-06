@@ -1,10 +1,10 @@
-/**
- * NOTIFICADOR HUD TÁCTICO - MUNDO PEPELU
- * Sistema de Toasts estilo videojuego con soporte para XP y avisos críticos.
- */
+import { playXPLevelUp } from './audio-manager.js';
 
 export function showXPNotification(amount, message = "¡Sigue así!") {
     const container = getOrCreateNotifyContainer();
+    
+    // Reproducir sonido de recompensa
+    playXPLevelUp();
     
     const toast = document.createElement('div');
     toast.className = 'xp-toast';
