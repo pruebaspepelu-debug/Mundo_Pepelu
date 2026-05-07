@@ -1,14 +1,7 @@
-import { db, currentUser, auth } from '../core/firebase-init.js';
+import { db, auth } from '../core/firebase-init.js';
 import { showScreen } from '../core/navigation.js';
 import { initCalendar } from './agenda.js';
 import { incrementGamify } from './habitos.js';
-
-import { startMusicModule } from '../core/audio-manager.js';
-import { db, currentUser, auth } from '../core/firebase-init.js';
-import { showScreen } from '../core/navigation.js';
-import { initCalendar } from './agenda.js';
-import { incrementGamify } from './habitos.js';
-
 import { startMusicModule } from '../core/audio-manager.js';
 import { startTracking } from '../core/time-tracker.js';
 

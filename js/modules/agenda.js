@@ -1,5 +1,4 @@
 let currentDate = new Date();
-import { loadSpecificDay } from './organizador.js';
 
 export function initCalendar() {
     renderCalendar();
@@ -74,7 +73,8 @@ export function renderCalendar() {
         
         dayCell.onclick = () => {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            loadSpecificDay(dateStr);
+            if (window.loadSpecificDay) window.loadSpecificDay(dateStr);
+            else console.error("loadSpecificDay no está definido en window");
         };
 
         // Resaltar día actual
