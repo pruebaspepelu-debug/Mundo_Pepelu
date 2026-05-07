@@ -280,6 +280,7 @@ export function addCustomExercise() {
     valIn.value = '';
     if(instrIn) instrIn.value = '';
     renderCustomRoutine();
+    saveCustomRoutine(); // <- Guardado automático añadido
 }
 
 export function deleteCustomExercise(index) {

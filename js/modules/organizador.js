@@ -4,7 +4,15 @@ import { initCalendar } from './agenda.js';
 import { incrementGamify } from './habitos.js';
 
 import { startMusicModule } from '../core/audio-manager.js';
+import { db, currentUser, auth } from '../core/firebase-init.js';
+import { showScreen } from '../core/navigation.js';
+import { initCalendar } from './agenda.js';
+import { incrementGamify } from './habitos.js';
+
+import { startMusicModule } from '../core/audio-manager.js';
 import { startTracking } from '../core/time-tracker.js';
+
+export let currentPlanDate = null;
 
 // =========================================
 // UI TABS
@@ -227,8 +235,22 @@ function getTodayString() {
 
 export function loadPlan(dateStr = null) {
     if (!dateStr) dateStr = getTodayString();
+    currentPlanDate = dateStr; // Actualizar variable global
+
+    // Actualizar encabezado UI
+    const dateLabel = document.getElementById('snapshotDateLabel');
+    if (dateLabel) {
+        if (dateStr === getTodayString()) {
+            dateLabel.innerText = "HOY (" + dateStr + ")";
+            dateLabel.style.color = "#10b981"; // Verde si es hoy
+        } else {
+            dateLabel.innerText = "PLANIFICANDO: " + dateStr;
+            dateLabel.style.color = "var(--primary)"; // Azul si es otro día
+        }
+    }
     
-    const savedPlan = localStorage.getItem('snapshot_plan');
+    // Usar una clave única por día
+    const savedPlan = localStorage.getItem(`snapshot_plan_${currentPlanDate}`) || localStorage.getItem('snapshot_plan');
     const today = getTodayString();
     
     if (savedPlan) {
@@ -266,7 +288,7 @@ export function loadPlan(dateStr = null) {
                 planData.focus = currentSnapshotData.focus;
                 planData.focusDone = currentSnapshotData.focusDone;
                 planData.schedule = currentSnapshotData.schedule;
-                localStorage.setItem('snapshot_plan', JSON.stringify(planData));
+                localStorage.setItem(`snapshot_plan_${currentPlanDate}`, JSON.stringify(planData));
             } else {
                 currentSnapshotData = {
                     focus: planData.focus || ["", "", ""],
@@ -275,10 +297,10 @@ export function loadPlan(dateStr = null) {
                 };
             }
             
-            if (planData.date === today) {
+            if (currentPlanDate === today) {
                 snapshotPhase = 2;
                 renderSnapshotPhase2();
-            } else if (planData.date < today) {
+            } else if (currentPlanDate < today) {
                 snapshotPhase = 3;
                 renderSnapshotPhase3();
             } else {
@@ -322,15 +344,15 @@ export function sellarPlan() {
     const val00 = document.getElementById(`snap-00:00`).value.trim();
     if (val00) schedule["00:00"] = { text: val00, isDone: false };
 
-    const today = getTodayString();
     const planData = {
-        date: today,
+        date: currentPlanDate,
         focus: [f1, f2, f3],
         focusDone: [false, false, false],
         schedule: schedule
     };
     
-    localStorage.setItem('snapshot_plan', JSON.stringify(planData));
+    // Guardar específicamente para la fecha planificada
+    localStorage.setItem(`snapshot_plan_${currentPlanDate}`, JSON.stringify(planData));
     currentSnapshotData = planData;
     
     // Gamificación
@@ -547,3 +569,4 @@ document.addEventListener('focusin', (e) => {
         }, 150);
     }
 });
+

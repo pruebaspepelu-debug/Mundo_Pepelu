@@ -66,29 +66,32 @@ export const BREATHE_DB = {
 
 export function renderBreatheMenu() {
     const container = document.getElementById('breatheListContainer'); 
-    container.className = 'hub-grid-container'; // Aseguramos que use la cuadrÃ­cula
+    container.className = 'hub-grid-container'; // Aseguramos que use la cuadrícula
     container.innerHTML = '';
     
     for (const [id, tech] of Object.entries(BREATHE_DB)) {
-        let warningHtml = tech.warning ? `<div class="safety-warning">${tech.warning}</div>` : '';
+        // Asegurarnos de que la técnica conoce su propio ID para la lógica de voz
+        tech.id = id; 
         
-        let html = `
-            <div class="hub-card zen-theme" style="flex-direction: column; align-items: flex-start; cursor: default;">
-                <div class="hub-card-icon" style="align-self: center;">${tech.icon}</div>
-                <div class="hub-card-info" style="width: 100%;">
-                    <h4 class="hub-card-title" style="color: var(--breathe); text-align: center;">${tech.effect}</h4>
-                    <p class="hub-card-desc" style="text-align: center; margin-bottom: 5px;"><strong>${tech.n}</strong></p>
-                    <p class="hub-card-desc" style="font-size: 0.75rem; text-align: center;">${tech.desc}</p>
-                    ${warningHtml}
+        let warningHtml = tech.warning ? <div class="safety-warning" style="margin-top: 10px;"> + tech.warning + </div> : '';
+        
+        let html = 
+            <div class="hub-card zen-theme" style="flex-direction: column; align-items: center; cursor: default; height: 100%;">
+                <div class="hub-card-icon" style="margin-bottom: 10px;"> + tech.icon + </div>
+                <div class="hub-card-info" style="width: 100%; flex: 1; display: flex; flex-direction: column;">
+                    <h4 class="hub-card-title" style="color: var(--breathe); text-align: center; margin-bottom: 8px;"> + tech.effect + </h4>
+                    <p class="hub-card-desc" style="text-align: center; margin-bottom: 8px; font-size: 0.95rem;"><strong> + tech.n + </strong></p>
+                    <p class="hub-card-desc" style="font-size: 0.8rem; text-align: center; flex: 1; opacity: 0.8;"> + tech.desc + </p>
+                     + warningHtml + 
                 </div>
-                <div class="tech-options" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; width: 100%; justify-content: center;">
-        `;
+                <div class="tech-options" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; width: 100%; justify-content: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+        ;
         
         tech.options.forEach(opt => { 
-            html += `<button class="btn-opt" style="padding: 8px 12px; font-size: 0.8rem;" onclick="initBreatheEngine('${id}', ${opt.v})">${opt.l}</button>`; 
+            html += <button class="btn btn-main" style="background: rgba(139, 92, 246, 0.2); border: 1px solid var(--breathe); color: #fff; padding: 10px 15px; font-size: 0.85rem; border-radius: 12px; margin: 0; min-width: 120px;" onclick="initBreatheEngine(' + id + ',  + opt.v + )"> + opt.l + </button>; 
         });
         
-        html += `</div></div>`; 
+        html += </div></div>; 
         container.innerHTML += html;
     }
 }
@@ -188,3 +191,4 @@ export function finBreathe() {
     // ConexiÃ³n con GamificaciÃ³n
     incrementGamify('mindfulness_sesiones', 1);
 }
+
