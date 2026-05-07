@@ -108,25 +108,33 @@ export async function initTradingChart() {
     const container = document.getElementById('trading-chart-container');
     if (!container || chartInstance) return;
 
-    chartInstance = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: 450,
-        layout: {
-            background: { type: 'solid', color: 'transparent' },
-            textColor: '#94a3b8',
-        },
-        grid: {
-            vertLines: { color: 'rgba(255, 255, 255, 0.02)' },
-            horzLines: { color: 'rgba(255, 255, 255, 0.02)' },
-        },
-        timeScale: { borderVisible: false },
-        rightPriceScale: { borderVisible: false }
-    });
+    try {
+        chartInstance = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 450,
+            layout: {
+                background: { type: 'solid', color: 'transparent' },
+                textColor: '#94a3b8',
+            },
+            grid: {
+                vertLines: { color: 'rgba(255, 255, 255, 0.02)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.02)' },
+            },
+            timeScale: { borderVisible: false },
+            rightPriceScale: { borderVisible: false }
+        });
 
-    const candleSeries = chartInstance.addCandlestickSeries({
-        upColor: '#00ff88', downColor: '#ff0055', borderVisible: false,
-        wickUpColor: '#00ff88', wickDownColor: '#ff0055',
-    });
+        if (chartInstance && typeof chartInstance.addCandlestickSeries === 'function') {
+            const candleSeries = chartInstance.addCandlestickSeries({
+                upColor: '#00ff88', downColor: '#ff0055', borderVisible: false,
+                wickUpColor: '#00ff88', wickDownColor: '#ff0055',
+            });
+        } else {
+            console.warn("LightweightCharts: addCandlestickSeries no disponible. Comprueba la versión de la librería.");
+        }
+    } catch (e) {
+        console.error("Error al inicializar el gráfico de trading:", e);
+    }
 
     // Cargar datos de los últimos 7 días
     const last7Days = [];

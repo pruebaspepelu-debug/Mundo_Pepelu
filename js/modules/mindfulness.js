@@ -67,34 +67,35 @@ export const BREATHE_DB = {
 export function renderBreatheMenu() {
     const container = document.getElementById('breatheListContainer'); 
     if (!container) return;
-    container.className = 'hub-grid-container'; // Aseguramos que use la cuadrícula
-    container.innerHTML = '';
+    
+    container.className = 'hub-grid-container';
+    let fullHtml = '';
     
     for (const [id, tech] of Object.entries(BREATHE_DB)) {
-        // Aseguramos que la técnica conoce su ID para la lógica interna
         tech.id = id;
+        const warningHtml = tech.warning ? `<div style="margin-top: 10px; font-size: 0.7rem; color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 8px; border-radius: 8px; width: 100%;">${tech.warning}</div>` : '';
         
-        let warningHtml = tech.warning ? `<div class="safety-warning" style="margin-top: 10px; font-size: 0.75rem; color: #f87171; border: 1px solid rgba(248, 113, 113, 0.2); padding: 5px; border-radius: 8px; background: rgba(248, 113, 113, 0.05);">${tech.warning}</div>` : '';
-        
-        let html = `
-            <div class="hub-card zen-theme" style="flex-direction: column; align-items: center; cursor: default; height: 100%; padding: 20px;">
-                <div class="hub-card-icon" style="margin-bottom: 15px; font-size: 2.5rem;">${tech.icon}</div>
-                <div class="hub-card-info" style="width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center;">
-                    <h4 class="hub-card-title" style="color: var(--breathe); text-align: center; margin-bottom: 5px; font-weight: 900;">${tech.effect}</h4>
-                    <p class="hub-card-desc" style="text-align: center; margin-bottom: 10px; font-size: 0.9rem; color: #cbd5e1;"><strong>${tech.n}</strong></p>
-                    <p class="hub-card-desc" style="font-size: 0.8rem; text-align: center; opacity: 0.8; line-height: 1.4;">${tech.desc}</p>
+        let techHtml = `
+            <div class="hub-card zen-theme" style="display: flex !important; flex-direction: column !important; align-items: center !important; text-align: center; padding: 25px; height: 100%; min-height: 320px; justify-content: space-between;">
+                <div class="hub-card-icon" style="font-size: 3rem; margin-bottom: 10px;">${tech.icon}</div>
+                <div class="hub-card-info" style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1;">
+                    <h4 class="hub-card-title" style="color: var(--breathe); font-size: 1.2rem; font-weight: 900; margin: 0;">${tech.effect}</h4>
+                    <p style="margin: 0; font-size: 0.9rem; color: #fff; font-weight: bold;">${tech.n}</p>
+                    <p style="margin: 0; font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">${tech.desc}</p>
                     ${warningHtml}
                 </div>
-                <div class="tech-options" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; width: 100%; justify-content: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="tech-options" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; width: 100%; justify-content: center;">
         `;
         
         tech.options.forEach(opt => { 
-            html += `<button class="btn btn-main" style="background: rgba(139, 92, 246, 0.1); border: 1px solid var(--breathe); color: #fff; padding: 10px 15px; font-size: 0.85rem; border-radius: 12px; margin: 0; min-width: 110px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" onclick="initBreatheEngine('${id}', ${opt.v})">${opt.l}</button>`; 
+            techHtml += `<button class="btn btn-main" style="background: rgba(139, 92, 246, 0.2); border: 1px solid var(--breathe); color: #fff; padding: 10px; font-size: 0.8rem; border-radius: 10px; flex: 1; min-width: 100px;" onclick="initBreatheEngine('${id}', ${opt.v})">${opt.l}</button>`; 
         });
         
-        html += `</div></div>`; 
-        container.innerHTML += html;
+        techHtml += `</div></div>`; 
+        fullHtml += techHtml;
     }
+    
+    container.innerHTML = fullHtml;
 }
 
 export let bAct=null, bTar=0, bCur=0, bInt=null, bRun=false, bPha=-1, bSec=0, bTick=0;
