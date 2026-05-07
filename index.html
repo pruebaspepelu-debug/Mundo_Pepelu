@@ -208,13 +208,22 @@
         </div>
         <div class="custom-routine-builder glass-card">
             <div style="font-weight: bold; color: #cbd5e1; margin-bottom: 10px; text-align: center;">CREADOR DE RUTINAS</div>
-            <div class="cr-inputs">
-                <input type="text" id="crExName" placeholder="Nombre del ejercicio" autocomplete="off" class="cr-input">
-                <select id="crExType" class="cr-input-small" style="width: 70px; font-size: 0.8rem; padding: 10px 5px;" onchange="document.getElementById('crCadenceRow').style.display = this.value === 'reps' ? 'flex' : 'none'">
-                    <option value="secs">⏱️</option>
-                    <option value="reps">🔢</option>
-                </select>
-                <input type="number" id="crExVal" placeholder="Cant" autocomplete="off" class="cr-input-small">
+            <div class="cr-field" style="margin-bottom: 15px;">
+                <label>NOMBRE DEL EJERCICIO</label>
+                <input type="text" id="crExName" placeholder="Ej: Flexiones de brazos" autocomplete="off" class="cr-input">
+            </div>
+            <div class="cr-inputs" style="margin-bottom: 15px;">
+                <div class="cr-field" style="flex: 2;">
+                    <label>MODO</label>
+                    <select id="crExType" class="cr-input" style="padding: 10px;" onchange="document.getElementById('crCadenceRow').style.display = this.value === 'reps' ? 'flex' : 'none'; document.getElementById('labelExVal').innerText = this.value === 'reps' ? 'REPETICIONES' : 'TIEMPO (s)'">
+                        <option value="secs">⏱️ TIEMPO (Segundos)</option>
+                        <option value="reps">🔢 REPETICIONES</option>
+                    </select>
+                </div>
+                <div class="cr-field" style="flex: 1;">
+                    <label id="labelExVal">TIEMPO (s)</label>
+                    <input type="number" id="crExVal" placeholder="30" autocomplete="off" class="cr-input" style="text-align: center;">
+                </div>
             </div>
             <div id="crCadenceRow" style="display:none; margin-bottom: 10px; align-items: center; gap: 10px; padding: 0 5px;">
                 <span style="font-size: 0.8rem; color: #94a3b8;">RITMO:</span>
