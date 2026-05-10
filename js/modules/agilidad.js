@@ -5,13 +5,22 @@ import { incrementGamify } from './habitos.js';
 let gameSessionStart = null;
 
 export class AdaptiveDifficultyManager {
-    constructor() {
+    constructor(config = {}) {
+        // Lógica de Puntuación (Modular)
         this.multiplier = 1.0;
         this.consecutiveHits = 0;
         this.consecutiveMisses = 0;
         this.totalHits = 0;
         this.totalAttempts = 0;
         this.reactionTimes = [];
+
+        // Lógica de Tiempo (Online IA)
+        this.tiempoActual = config.tiempoInicial || 3000;
+        this.tiempoMinimo = config.tiempoMinimo || 800;
+        this.tiempoMaximo = config.tiempoMaximo || 5000;
+        this.umbralTiempoRapido = config.umbralTiempoRapido || 1500;
+        this.rachaAciertos = 0;
+        this.rachaFallos = 0;
     }
 
     record(hit, timeMs) {
@@ -22,24 +31,43 @@ export class AdaptiveDifficultyManager {
             this.totalHits++;
             this.consecutiveHits++;
             this.consecutiveMisses = 0;
+            this.rachaFallos = 0;
+            this.rachaAciertos++;
+
+            // Ajuste de multiplicador de puntos
             if (this.consecutiveHits % 3 === 0) {
                 this.multiplier = Math.min(3.0, this.multiplier + 0.15);
+            }
+
+            // Ajuste de dificultad temporal (IA)
+            if (this.rachaAciertos >= 3 && timeMs < this.umbralTiempoRapido) {
+                this.tiempoActual = Math.max(this.tiempoMinimo, this.tiempoActual * 0.9);
+                this.rachaAciertos = 0;
             }
         } else {
             this.consecutiveMisses++;
             this.consecutiveHits = 0;
+            this.rachaAciertos = 0;
+            this.rachaFallos++;
+
+            // Penalización de puntos
             this.multiplier = Math.max(0.5, this.multiplier - 0.2);
+
+            // Relajación de dificultad temporal (IA)
+            if (this.rachaFallos >= 2) {
+                this.tiempoActual = Math.min(this.tiempoMaximo, this.tiempoActual * 1.15);
+                this.rachaFallos = 0;
+            }
         }
     }
 
-    getMultiplier() {
-        return this.multiplier;
-    }
+    getMultiplier() { return this.multiplier; }
+    getTime() { return Math.round(this.tiempoActual); }
 
     getStats() {
         let precision = this.totalAttempts > 0 ? Math.round((this.totalHits / this.totalAttempts) * 100) : 0;
         let avgTime = this.reactionTimes.length > 0 ? this.reactionTimes.reduce((a, b) => a + b, 0) / this.reactionTimes.length : 0;
-        let ppm = avgTime > 0 ? Math.round(60000 / avgTime) : 0; // Processing Per Minute
+        let ppm = avgTime > 0 ? Math.round(60000 / avgTime) : 0; 
         let baseScore = this.totalHits * 100;
         let difficultyBonus = baseScore * (this.multiplier - 1.0);
         let speedBonus = ppm * 2;
@@ -92,7 +120,12 @@ export function showGameResult(html, gID, val, lowBet=false) {
 export let mathScore=0, mathTime=30, mathInt=null, currentAns=0; 
 let lastMathTime = 0;
 export function startMath() { 
-    adm = new AdaptiveDifficultyManager();
+    // Inicializar ADM con tiempos de cálculo (IA)
+    adm = new AdaptiveDifficultyManager({
+        tiempoInicial: 30, // Segundos totales de juego (usado para el contador, no para ADM en sí)
+        tiempoMinimo: 800, 
+        tiempoMaximo: 5000
+    });
     mathScore=0; mathTime=30; 
     document.getElementById('mathScore').innerText="0 pts"; 
     document.getElementById('mathIn').value=""; 
@@ -141,7 +174,11 @@ export function submitMath(e) {
 // ==========================================
 export let refCount=0, refSpawn=0, refTimeout=null; 
 export function startReflex() { 
-    adm = new AdaptiveDifficultyManager();
+    adm = new AdaptiveDifficultyManager({
+        tiempoInicial: 2000, // Tiempo base para reflejos
+        tiempoMinimo: 400,
+        tiempoMaximo: 3000
+    });
     refCount=0; 
     document.getElementById('refCount').innerText="1"; 
     document.getElementById('refTarget').style.display="none"; 
@@ -167,8 +204,7 @@ export function clickTarget() {
     refCount++; 
     if(refCount<15){
         document.getElementById('refCount').innerText=refCount+1;
-        let mult = adm.getMultiplier();
-        let delay = Math.max(100, (Math.random()*600+200) / mult); 
+        let delay = Math.max(100, adm.getTime() / 4); 
         refTimeout=setTimeout(spawnTarget, delay);
     }else{
         let stats = adm.getStats();
@@ -243,9 +279,11 @@ export function nextStroop() {
     let cObj=stroopData[Math.floor(Math.random()*4)]; 
     const wN=document.getElementById('strWord');wN.innerText=wObj.txt;wN.style.color=cObj.hex;
     strTarget=cObj.val; 
-    let mult = adm.getMultiplier();
-    strTimeLeft=Math.max(800, 3000 / mult); 
+    
+    // IA Adaptativa: El tiempo se ajusta según el rendimiento
+    strTimeLeft = adm.getTime();
     let totalTime = strTimeLeft;
+    
     document.getElementById('strBar').style.width="100%"; 
     strSpawn=Date.now(); 
     clearInterval(strInt); 
@@ -271,7 +309,11 @@ export function strClick(val) {
 export let nbSeq = [], nbStep = 0, nbCurrentMatch = false;
 export function startNBack() {
     gameSessionStart = Date.now();
-    adm = new AdaptiveDifficultyManager();
+    adm = new AdaptiveDifficultyManager({
+        tiempoInicial: 1500,
+        tiempoMinimo: 600,
+        tiempoMaximo: 2500
+    });
     nbSeq = []; nbStep = 0; 
     showScreen('gameNBack');
     for(let i=0; i<20; i++) {
@@ -295,9 +337,11 @@ export function nextNBack() {
     let tSpawn = Date.now();
     window.currentNBackSpawn = tSpawn;
     window.currentNBackAnswered = false;
-    let mult = adm.getMultiplier();
-    let displayTime = Math.max(400, 1500 / mult);
-    let gapTime = Math.max(200, 500 / mult);
+    // IA Adaptativa: El tiempo se ajusta según el rendimiento
+    let displayTime = adm.getTime();
+    if (displayTime > 2000) displayTime = 2000; // Cap para N-Back
+    
+    let gapTime = Math.max(200, displayTime / 3);
     setTimeout(() => {
         cell.classList.remove('active');
         if (nbCurrentMatch && !window.currentNBackAnswered) adm.record(false, displayTime);

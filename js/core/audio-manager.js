@@ -1,7 +1,18 @@
-﻿export let bgMusicWorkout = null, isMusicWorkoutOn = false;
-export let bgMusicZen = null, isMusicZenOn = false;
-export let bgMusicGames = null, isMusicGamesOn = false;
-export let bgMusicOrg = null, isMusicOrgOn = false;
+export let bgMusicWorkout = new Audio('./Online/voces/musica_fondo.mp3'); 
+bgMusicWorkout.loop=true; bgMusicWorkout.volume=0.25;
+export let isMusicWorkoutOn = false;
+
+export let bgMusicZen = new Audio('./Online/audios_zen/musica_zen.mp3'); 
+bgMusicZen.loop=true; bgMusicZen.volume=0.30;
+export let isMusicZenOn = false;
+
+export let bgMusicGames = new Audio('./Online/audio_modulo_juegos/musica_fondo_juegos.mp3'); 
+bgMusicGames.loop=true; bgMusicGames.volume=0.35;
+export let isMusicGamesOn = false;
+
+export let bgMusicOrg = new Audio('./Online/audios_organizador/ondas_alfa.m4a'); 
+bgMusicOrg.loop=true; bgMusicOrg.volume=0.45;
+export let isMusicOrgOn = false;
 
 export const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -18,37 +29,22 @@ export function toggleMusic(type) {
     if(type === 'workout') {
         const btns = [document.getElementById('btnToggleMusicWorkoutGlobal'), document.getElementById('btnToggleMusicWorkoutEst'), document.getElementById('btnToggleMusicWorkoutIn')];
         if(isMusicWorkoutOn) { bgMusicWorkout.pause(); isMusicWorkoutOn=false; btns.forEach(b => b?.classList.add('toggle-off')); } 
-        else { if(!bgMusicWorkout) { bgMusicWorkout = new Audio('./Online/voces/musica_fondo.mp3'); bgMusicWorkout.loop=true; bgMusicWorkout.volume=0.12; } bgMusicWorkout.play().catch(e=>{}); isMusicWorkoutOn=true; btns.forEach(b => b?.classList.remove('toggle-off')); }
+        else { bgMusicWorkout.play().catch(e=>{ console.error("Error workout music:", e); }); isMusicWorkoutOn=true; btns.forEach(b => b?.classList.remove('toggle-off')); }
     } 
     else if(type === 'zen') {
         const b1 = document.getElementById('btnToggleMusicZen'); const b2 = document.getElementById('btnToggleMusicZenGlobal');
         if(isMusicZenOn) { bgMusicZen.pause(); isMusicZenOn=false; b1?.classList.add('toggle-off'); b2?.classList.add('toggle-off'); } 
-        else { if(!bgMusicZen) { bgMusicZen = new Audio('./Online/audios_zen/musica_zen.mp3'); bgMusicZen.loop=true; bgMusicZen.volume=0.15; } bgMusicZen.play().catch(e=>{}); isMusicZenOn=true; b1?.classList.remove('toggle-off'); b2?.classList.remove('toggle-off'); }
+        else { bgMusicZen.play().catch(e=>{ console.error("Error zen music:", e); }); isMusicZenOn=true; b1?.classList.remove('toggle-off'); b2?.classList.remove('toggle-off'); }
     }
     else if(type === 'games') {
         const bGlobal = document.getElementById('btnToggleMusicGamesGlobal');
         if(isMusicGamesOn) { bgMusicGames.pause(); isMusicGamesOn=false; bGlobal?.classList.add('toggle-off'); } 
-        else { if(!bgMusicGames) { bgMusicGames = new Audio('./Online/audio_modulo_juegos/musica_fondo_juegos.mp3'); bgMusicGames.loop=true; bgMusicGames.volume=0.2; } bgMusicGames.play().catch(e=>{}); isMusicGamesOn=true; bGlobal?.classList.remove('toggle-off'); }
+        else { bgMusicGames.play().catch(e=>{ console.error("Error games music:", e); }); isMusicGamesOn=true; bGlobal?.classList.remove('toggle-off'); }
     }
     else if(type === 'org') {
         const b = document.getElementById('btnToggleMusicOrg');
-        if(isMusicOrgOn) { 
-            bgMusicOrg.pause(); 
-            isMusicOrgOn=false; 
-            b?.classList.add('toggle-off'); 
-        } else { 
-            if(!bgMusicOrg) { 
-                bgMusicOrg = new Audio('./Online/audios_organizador/ondas_alfa.m4a'); 
-                bgMusicOrg.loop = true; 
-                bgMusicOrg.volume = 0.30; 
-            } 
-            bgMusicOrg.play().then(() => {
-                isMusicOrgOn = true; 
-                b?.classList.remove('toggle-off'); 
-            }).catch(e => {
-                console.error("Error al reproducir el audio: ", e);
-            });
-        }
+        if(isMusicOrgOn) { bgMusicOrg.pause(); isMusicOrgOn=false; b?.classList.add('toggle-off'); } 
+        else { bgMusicOrg.play().then(() => { isMusicOrgOn = true; b?.classList.remove('toggle-off'); }).catch(e => { console.error("Error org music:", e); }); }
     }
 }
 
@@ -106,10 +102,39 @@ export function playWorkoutAudio(filename, fbTitle, fbInstr) {
 }
 
 export let isVoiceZenOn = true; 
-export function toggleZenVoice() { const b = document.getElementById('btnToggleVoiceZen'); if(isVoiceZenOn){isVoiceZenOn=false;b.classList.add('toggle-off');}else{isVoiceZenOn=true;b.classList.remove('toggle-off');} } 
+export const zenAudioPool = {
+    inhala: new Audio('./Online/audios_zen/inhala.mp3'),
+    exhala: new Audio('./Online/audios_zen/exhala.mp3'),
+    aguanta: new Audio('./Online/audios_zen/aguanta.mp3'),
+    inhala_doble: new Audio('./Online/audios_zen/inhala_doble.mp3')
+};
+
+export function toggleZenVoice() { 
+    const b = document.getElementById('btnToggleVoiceZen'); 
+    if(isVoiceZenOn){
+        isVoiceZenOn=false;
+        b?.classList.add('toggle-off');
+    }else{
+        isVoiceZenOn=true;
+        b?.classList.remove('toggle-off');
+        // Desbloquear audios en móvil al activar
+        Object.values(zenAudioPool).forEach(a => { a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {}); });
+    } 
+} 
+
 export function playZenVoice(fn) { 
     if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    if(!isVoiceZenOn)return; let a=new Audio('./Online/audios_zen/' + fn + '.mp3'); a.play().catch(e=>{}); 
+    if(!isVoiceZenOn) return; 
+    
+    const audio = zenAudioPool[fn];
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.warn("Error playZenVoice:", e));
+    } else {
+        // Fallback si no está en el pool
+        let a = new Audio('./Online/audios_zen/' + fn + '.mp3'); 
+        a.play().catch(e => {}); 
+    }
 }
 
 export let isVoiceWorkoutOn = true;
@@ -241,7 +266,16 @@ document.addEventListener('click', () => {
     if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume().then(() => console.log("AudioContext DESBLOQUEADO"));
     }
+    // Desbloquear pool de mindfulness
+    Object.values(zenAudioPool).forEach(a => {
+        a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+    });
+    // Desbloquear músicas de fondo
+    [bgMusicWorkout, bgMusicZen, bgMusicGames, bgMusicOrg].forEach(m => {
+        m.play().then(() => { m.pause(); m.currentTime = 0; }).catch(() => {});
+    });
 }, { once: true });
+
 
 export function playXPLevelUp() {
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
