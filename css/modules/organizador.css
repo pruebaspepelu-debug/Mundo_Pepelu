@@ -160,8 +160,44 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
+    transition: all 0.3s;
+}
+
+.idea-card.idea-done {
+    opacity: 0.6;
+    border-left-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.idea-card.idea-done span {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
+.idea-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.check-idea {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.2s;
+    opacity: 0.5;
+}
+
+.check-idea:hover {
+    transform: scale(1.3);
+    opacity: 1;
+}
+
+.idea-done .check-idea {
+    opacity: 1;
 }
 
 .idea-card span {
@@ -299,9 +335,41 @@
     color: #ef4444;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+.agenda-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    margin-bottom: 5px;
+    padding-right: 10px;
+}
+
+.row-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.row-action-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.row-action-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #10b981;
 }
 
 .agenda-input {

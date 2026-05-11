@@ -123,16 +123,29 @@ export function loadIdeas() {
             
             ideas.forEach(data => {
                 const ideaEl = document.createElement('div');
-                ideaEl.className = `idea-card idea-${data.priority}`;
+                ideaEl.className = `idea-card idea-${data.priority} ${data.done ? 'idea-done' : ''}`;
                 
                 ideaEl.innerHTML = `<span>${data.text}</span>`;
+                
+                const actions = document.createElement('div');
+                actions.className = 'idea-actions';
+
+                // Check verde para marcar éxito
+                const checkBtn = document.createElement('button');
+                checkBtn.className = 'check-idea';
+                checkBtn.innerHTML = '✅';
+                checkBtn.title = 'Marcar como completado';
+                checkBtn.onclick = () => toggleIdeaDone(data.id, data.done);
+                actions.appendChild(checkBtn);
                 
                 const delBtn = document.createElement('button');
                 delBtn.className = 'delete-idea';
                 delBtn.innerText = '✕';
                 delBtn.title = 'Borrar Idea';
-                delBtn.onclick = () => deleteIdea(data.id);
-                ideaEl.appendChild(delBtn);
+                delBtn.onclick = (e) => { e.stopPropagation(); deleteIdea(data.id); };
+                actions.appendChild(delBtn);
+
+                ideaEl.appendChild(actions);
                 
                 switch (data.priority) {
                     case 'red':
@@ -158,6 +171,16 @@ async function deleteIdea(id) {
         } catch (error) {
             console.error("Error al borrar la idea: ", error);
         }
+    }
+}
+
+async function toggleIdeaDone(id, currentStatus) {
+    try {
+        await db.collection('ideas').doc(id).update({
+            done: !currentStatus
+        });
+    } catch (error) {
+        console.error("Error al actualizar idea: ", error);
     }
 }
 
@@ -436,13 +459,24 @@ function renderSnapshotPhase1() {
                 <div class="agenda-row">
                     <span class="agenda-time">${t}</span>
                     <input type="text" class="agenda-input" id="snap-${t}" placeholder="..." value="${val}" autocomplete="off">
-                    <button class="idea-bulb-btn" onclick="openIdeaSelector('snap-${t}')">💡</button>
+                    <div class="row-actions">
+                        <button class="row-action-btn" title="Duplicar anterior" onclick="duplicatePrevRow('${t}')">📋</button>
+                        <button class="row-action-btn" title="Ideas" onclick="openIdeaSelector('snap-${t}')">💡</button>
+                    </div>
                 </div>`;
         });
     }
     // 00:00 final
     const val00 = currentSnapshotData.schedule["00:00"] ? currentSnapshotData.schedule["00:00"].text : '';
-    html += `<div class="agenda-row"><span class="agenda-time">00:00</span><input type="text" class="agenda-input" id="snap-00:00" placeholder="..." value="${val00}" autocomplete="off"><button class="idea-bulb-btn" onclick="openIdeaSelector('snap-00:00')">💡</button></div>`;
+    html += `
+        <div class="agenda-row">
+            <span class="agenda-time">00:00</span>
+            <input type="text" class="agenda-input" id="snap-00:00" placeholder="..." value="${val00}" autocomplete="off">
+            <div class="row-actions">
+                <button class="row-action-btn" title="Duplicar anterior" onclick="duplicatePrevRow('00:00')">📋</button>
+                <button class="row-action-btn" title="Ideas" onclick="openIdeaSelector('snap-00:00')">💡</button>
+            </div>
+        </div>`;
     
     list.innerHTML = html;
 }
@@ -562,4 +596,14 @@ document.addEventListener('focusin', (e) => {
         }, 150);
     }
 });
+// Duplicar fila anterior
+window.duplicatePrevRow = function(currentTime) {
+    const inputs = Array.from(document.querySelectorAll('.agenda-input'));
+    const currentInput = document.getElementById(`snap-${currentTime}`);
+    const index = inputs.indexOf(currentInput);
+    if (index > 0) {
+        currentInput.value = inputs[index - 1].value;
+    }
+};
 
+window.toggleIdeaDone = toggleIdeaDone;

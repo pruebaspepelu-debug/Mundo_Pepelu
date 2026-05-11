@@ -367,7 +367,7 @@ export async function renderHeatmap() {
         const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const dayData = habits[dateStr] || {};
         
-        const pts = calculateDailyPoints(dayData);
+        const pts = calculateDailyXP(dayData).total;
         let level = 0;
         if (pts > 0) {
             if (pts < 15) level = 1;
@@ -389,7 +389,7 @@ export function showDayDetails(date, data) {
     const detailsBox = document.getElementById('habitDetails');
     if (!detailsBox) return;
     
-    const pts = calculateDailyPoints(data);
+    const pts = calculateDailyXP(data).total;
     
     let html = `<div style="font-weight: 800; margin-bottom: 5px; color: #fff;">DETALLES DEL ${date}</div>`;
     html += `<div style="color: #facc15; font-weight: 900; margin-bottom: 15px;">TOTAL: ${pts} PUNTOS</div>`;
