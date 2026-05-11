@@ -1,8 +1,8 @@
-export let bgMusicWorkout = new Audio('./Online/voces/musica_fondo.mp3'); 
+export let bgMusicWorkout = new Audio('./Online/voces/musica_fondo.m4a'); 
 bgMusicWorkout.loop=true; bgMusicWorkout.volume=0.25;
 export let isMusicWorkoutOn = false;
 
-export let bgMusicZen = new Audio('./Online/audios_zen/musica_zen.mp3'); 
+export let bgMusicZen = new Audio('./Online/audios_zen/musica_zen.m4a'); 
 bgMusicZen.loop=true; bgMusicZen.volume=0.30;
 export let isMusicZenOn = false;
 
