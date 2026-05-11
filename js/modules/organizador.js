@@ -249,69 +249,39 @@ function getTodayString() {
     return (new Date(today.getTime() - offset)).toISOString().slice(0, 10);
 }
 
-export function loadPlan(dateStr = null) {
+export async function loadPlan(dateStr = null) {
+    if (!auth.currentUser) {
+        console.warn("loadPlan: Esperando auth...");
+        return;
+    }
+    
     if (!dateStr) dateStr = getTodayString();
-    currentPlanDate = dateStr; // Actualizar variable global
+    currentPlanDate = dateStr;
 
     // Actualizar encabezado UI
     const dateLabel = document.getElementById('snapshotDateLabel');
     if (dateLabel) {
         if (dateStr === getTodayString()) {
             dateLabel.innerText = "HOY (" + dateStr + ")";
-            dateLabel.style.color = "#10b981"; // Verde si es hoy
+            dateLabel.style.color = "#10b981";
         } else {
             dateLabel.innerText = "PLANIFICANDO: " + dateStr;
-            dateLabel.style.color = "var(--primary)"; // Azul si es otro día
+            dateLabel.style.color = "var(--primary)";
         }
     }
     
-    // Usar una clave única por día
-    const savedPlan = localStorage.getItem(`snapshot_plan_${currentPlanDate}`) || localStorage.getItem('snapshot_plan');
     const today = getTodayString();
     
-    if (savedPlan) {
-        try {
-            const planData = JSON.parse(savedPlan);
-            
-            // Lógica de Migración: Si venimos de la versión v1 (array de 'tasks')
-            if (planData.tasks && (!planData.focus || planData.focus.every(f => !f))) {
-                const legacyFocus = planData.tasks.filter(t => t.isFocus);
-                const legacyOther = planData.tasks.filter(t => !t.isFocus);
-                
-                currentSnapshotData.focus = [
-                    legacyFocus[0] ? legacyFocus[0].text : "",
-                    legacyFocus[1] ? legacyFocus[1].text : "",
-                    legacyFocus[2] ? legacyFocus[2].text : ""
-                ];
-                currentSnapshotData.focusDone = [
-                    legacyFocus[0] ? !!legacyFocus[0].isDone : false,
-                    legacyFocus[1] ? !!legacyFocus[1].isDone : false,
-                    legacyFocus[2] ? !!legacyFocus[2].isDone : false
-                ];
-                
-                currentSnapshotData.schedule = {};
-                legacyOther.forEach((t, i) => {
-                    // Distribuir en slots de 30 min desde las 09:00
-                    let slotHour = 9 + Math.floor(i / 2);
-                    let slotMin = (i % 2 === 0) ? "00" : "30";
-                    if (slotHour <= 23) {
-                        let timeKey = `${slotHour.toString().padStart(2, '0')}:${slotMin}`;
-                        currentSnapshotData.schedule[timeKey] = { text: t.text, isDone: !!t.isDone };
-                    }
-                });
-                
-                // Guardar migración para que persista
-                planData.focus = currentSnapshotData.focus;
-                planData.focusDone = currentSnapshotData.focusDone;
-                planData.schedule = currentSnapshotData.schedule;
-                localStorage.setItem(`snapshot_plan_${currentPlanDate}`, JSON.stringify(planData));
-            } else {
-                currentSnapshotData = {
-                    focus: planData.focus || ["", "", ""],
-                    schedule: planData.schedule || {},
-                    focusDone: planData.focusDone || [false, false, false]
-                };
-            }
+    try {
+        const doc = await db.collection('snapshots').doc(`${auth.currentUser.uid}_${currentPlanDate}`).get();
+        
+        if (doc.exists) {
+            const planData = doc.data();
+            currentSnapshotData = {
+                focus: planData.focus || ["", "", ""],
+                schedule: planData.schedule || {},
+                focusDone: planData.focusDone || [false, false, false]
+            };
             
             if (currentPlanDate === today) {
                 snapshotPhase = 2;
@@ -323,19 +293,34 @@ export function loadPlan(dateStr = null) {
                 snapshotPhase = 1;
                 renderSnapshotPhase1();
             }
-        } catch (e) {
-            console.error("Error parseando snapshot_plan", e);
+        } else {
+            // Intentar migrar de localStorage si existe (compatibilidad única)
+            const legacy = localStorage.getItem(`snapshot_plan_${currentPlanDate}`);
+            if (legacy) {
+                const planData = JSON.parse(legacy);
+                currentSnapshotData = {
+                    focus: planData.focus || ["", "", ""],
+                    schedule: planData.schedule || {},
+                    focusDone: planData.focusDone || [false, false, false]
+                };
+                localStorage.removeItem(`snapshot_plan_${currentPlanDate}`); // Limpiar
+            } else {
+                currentSnapshotData = { focus: ["", "", ""], schedule: {}, focusDone: [false, false, false] };
+            }
+            
             snapshotPhase = 1;
             renderSnapshotPhase1();
         }
-    } else {
-        currentSnapshotData = { focus: ["", "", ""], schedule: {}, focusDone: [false, false, false] };
+    } catch (e) {
+        console.error("Error cargando snapshot desde Firebase:", e);
         snapshotPhase = 1;
         renderSnapshotPhase1();
     }
 }
 
-export function sellarPlan() {
+export async function sellarPlan() {
+    if (!auth.currentUser) return;
+
     // Recoger Foco
     const f1 = document.getElementById('snapFocus1').value.trim();
     const f2 = document.getElementById('snapFocus2').value.trim();
@@ -361,33 +346,39 @@ export function sellarPlan() {
     if (val00) schedule["00:00"] = { text: val00, isDone: false };
 
     const planData = {
+        uid: auth.currentUser.uid,
         date: currentPlanDate,
         focus: [f1, f2, f3],
         focusDone: [false, false, false],
-        schedule: schedule
+        schedule: schedule,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    // Guardar específicamente para la fecha planificada
-    localStorage.setItem(`snapshot_plan_${currentPlanDate}`, JSON.stringify(planData));
-    currentSnapshotData = planData;
-    
-    // Gamificación
-    incrementGamify('organizador_planificado', 1);
-    
-    snapshotPhase = 2;
-    renderSnapshotPhase2();
-    
-    const btn = document.getElementById('btnSellarPlan');
-    if (btn) {
-        const orig = btn.innerHTML;
-        btn.innerHTML = "¡COMPROMISO SELLADO!";
-        btn.classList.add("btn-fijar-success");
-        setTimeout(() => { btn.innerHTML = orig; btn.classList.remove("btn-fijar-success"); }, 2000);
+    try {
+        await db.collection('snapshots').doc(`${auth.currentUser.uid}_${currentPlanDate}`).set(planData);
+        currentSnapshotData = planData;
+        
+        // Gamificación
+        incrementGamify('organizador_planificado', 1);
+        
+        snapshotPhase = 2;
+        renderSnapshotPhase2();
+        
+        const btn = document.getElementById('btnSellarPlan');
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = "¡COMPROMISO SELLADO!";
+            btn.classList.add("btn-fijar-success");
+            setTimeout(() => { btn.innerHTML = orig; btn.classList.remove("btn-fijar-success"); }, 2000);
+        }
+    } catch (e) {
+        console.error("Error al sellar plan en Firebase:", e);
+        alert("Error al guardar en la nube. Revisa tu conexión.");
     }
 }
 
-export function toggleDoneSnapshot(type, id) {
-    if (snapshotPhase !== 3) return;
+export async function toggleDoneSnapshot(type, id) {
+    if (snapshotPhase !== 3 || !auth.currentUser) return;
     
     if (type === 'focus') {
         currentSnapshotData.focusDone[id] = !currentSnapshotData.focusDone[id];
@@ -395,13 +386,16 @@ export function toggleDoneSnapshot(type, id) {
         currentSnapshotData.schedule[id].isDone = !currentSnapshotData.schedule[id].isDone;
     }
     
-    // Guardar cambio
-    const planData = JSON.parse(localStorage.getItem('snapshot_plan'));
-    planData.focusDone = currentSnapshotData.focusDone;
-    planData.schedule = currentSnapshotData.schedule;
-    localStorage.setItem('snapshot_plan', JSON.stringify(planData));
-    
-    renderSnapshotPhase3();
+    try {
+        await db.collection('snapshots').doc(`${auth.currentUser.uid}_${currentPlanDate}`).update({
+            focusDone: currentSnapshotData.focusDone,
+            schedule: currentSnapshotData.schedule,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        renderSnapshotPhase3();
+    } catch (e) {
+        console.error("Error actualizando checkbox en Firebase:", e);
+    }
 }
 
 export function evaluarConstancia() {
