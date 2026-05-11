@@ -129,6 +129,16 @@ export async function initTradingChart() {
                 upColor: '#00ff88', downColor: '#ff0055', borderVisible: false,
                 wickUpColor: '#00ff88', wickDownColor: '#ff0055',
             });
+
+            // INYECTAR DATOS DE PRUEBA (DUMMY DATA) PARA VER EL DISEÑO:
+            candleSeries.setData([
+                { time: '2026-04-27', open: 10, high: 40, low: 10, close: 35 },
+                { time: '2026-04-28', open: 35, high: 60, low: 30, close: 50 },
+                { time: '2026-04-29', open: 50, high: 55, low: 20, close: 25 }, // Día malo (rojo)
+                { time: '2026-04-30', open: 25, high: 70, low: 25, close: 65 },
+                { time: '2026-05-01', open: 65, high: 80, low: 60, close: 75 },
+                { time: '2026-05-02', open: 75, high: 100, low: 70, close: 95 }, // Día casi perfecto
+            ]);
         } else {
             console.warn("LightweightCharts: addCandlestickSeries no disponible. Comprueba la versión de la librería.");
         }
@@ -154,27 +164,7 @@ export async function initTradingChart() {
         const dataMap = {};
         snapshot.forEach(doc => dataMap[doc.data().date] = doc.data());
 
-        const chartData = last7Days.map(date => {
-            const dayData = dataMap[date] || {};
-            const xp = calculateDailyXP(dayData).total;
-            return {
-                time: date,
-                open: xp * 0.8 || 10,
-                high: xp * 1.1 || 20,
-                low: xp * 0.7 || 5,
-                close: xp || 15
-            };
-        });
-
-        // INYECTAR DATOS DE PRUEBA (DUMMY DATA) PARA VER EL DISEÑO:
-        candleSeries.setData([
-            { time: '2026-04-27', open: 10, high: 40, low: 10, close: 35 },
-            { time: '2026-04-28', open: 35, high: 60, low: 30, close: 50 },
-            { time: '2026-04-29', open: 50, high: 55, low: 20, close: 25 }, // Día malo (rojo)
-            { time: '2026-04-30', open: 25, high: 70, low: 25, close: 65 },
-            { time: '2026-05-01', open: 65, high: 80, low: 60, close: 75 },
-            { time: '2026-05-02', open: 75, high: 100, low: 70, close: 95 }, // Día casi perfecto
-        ]);
+        // Lógica para actualizar con datos reales si fuera necesario
         
         chartInstance.timeScale().fitContent();
     } catch (e) { console.error(e); }
